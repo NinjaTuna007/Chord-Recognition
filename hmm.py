@@ -117,3 +117,11 @@ def viterbi(PI, A, B):
             states[j, i - 1] = state
 
     return (path, states)
+
+
+"""Baum-Welch to fine-tune A,B, PI based on Emission Sequences"""
+
+def baum_welch():
+    
+    # toy function at the moment, needs to be filled in.
+    return None
