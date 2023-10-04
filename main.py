@@ -5,7 +5,8 @@ from scipy.io.wavfile import read
 import json
 from chromagram import compute_chroma
 import hmm as hmm
-
+import librosa
+import pydub
 
 def get_templates(chords):
     """read from JSON file to get chord templates"""
@@ -149,6 +150,7 @@ def find_chords(
         final_chords = []
         indices = np.argmax(path, axis=0)
         final_states = np.zeros(nFrames)
+        #final_states = []
 
         # find no chord zone
         set_zero = np.where(np.max(path, axis=0) < 0.3 * np.max(path))[0]
@@ -210,9 +212,22 @@ def main(argv):
     print("Method is ", method)
     directory = os.getcwd() + "/data/test_chords/"
     # read the input file
-    (fs, s) = read(directory + input_file)
-    # convert to mono if file is stereo
-    x = s[:, 0] if len(s.shape) else s
+    #(fs, s) = read(directory + input_file)
+    audio = pydub.AudioSegment.from_file(f"{directory + input_file}")
+
+    # extract sample rateS
+    fs = audio.frame_rate
+
+    # retain only one channel
+    if audio.channels > 1:
+        audio = audio.split_to_mono()[0]
+
+    # extract audio waveform as a numpy array
+    audio_data = np.array(audio.get_array_of_samples())
+
+    # normalize the data
+    x = audio_data / np.max(np.abs(audio_data))
+
 
     # get chords and circle of fifths
     chords, nested_cof = get_nested_circle_of_fifths()
