@@ -57,7 +57,9 @@ def initialize(chroma, templates, chords, nested_cof):
     meu_mat = np.zeros((num_chords, num_chords // 2))
     cov_mat = np.zeros((num_chords, num_chords // 2, num_chords // 2))
     meu_mat = np.array(templates)
+    # print(meu_mat.shape)
     offset = 0
+    # print(num_chords)
 
     for i in range(num_chords):
         if i == num_chords // 2:
@@ -70,9 +72,20 @@ def initialize(chroma, templates, chords, nested_cof):
         dominant = (tonic + 7) % (num_chords // 2)
 
         # weighted diagonal
-        cov_mat[i, tonic, tonic] = 0.8
-        cov_mat[i, mediant, mediant] = 0.6
-        cov_mat[i, dominant, dominant] = 0.8
+        # print(i)
+
+        cov_mat[i, tonic, tonic] = 1.0
+        cov_mat[i, mediant, mediant] = 1.0
+        cov_mat[i, dominant, dominant] = 1.0
+
+        cov_mat[i, tonic, dominant] = 0.8
+        cov_mat[i, dominant, tonic] = 0.8
+        
+        cov_mat[i, mediant, dominant] = 0.8
+        cov_mat[i, dominant, mediant] = 0.8
+
+        cov_mat[i, tonic, mediant] = 0.6
+        cov_mat[i, mediant, tonic] = 0.6
 
         # off-diagonal - matrix not positive semidefinite, hence determinant is negative
         # for n in [tonic,mediant,dominant]:
@@ -93,9 +106,22 @@ def initialize(chroma, templates, chords, nested_cof):
 
     for m in range(nFrames):
         for n in range(num_chords):
-            B[n, m] = multivariate_gaussian(
+
+            # print("n: ", n)
+            # print("m: ", m)
+            # print("chroma: ", chroma[:, m])
+            # print("meu_mat: ", meu_mat[n, :])
+            # print("cov_mat: \n", cov_mat[n, :, :])
+            # print(wow_matrix)
+
+
+            wow_prob = multivariate_gaussian(
                 chroma[:, m], meu_mat[n, :], cov_mat[n, :, :]
             )
+            # print("wow_matrix: ", wow_prob)
+            B[n, m] = wow_prob
+    
+    # print(bow_wow_matrix)
 
     return (PI, A, B)
 
@@ -104,10 +130,24 @@ def initialize(chroma, templates, chords, nested_cof):
 
 
 def viterbi(PI, A, B):
+
+    # PI represents initialisation matrix - num_chords x 1
+    # A represents transition matrix - num_chords x num_chords
+    # B represents observation matrix - num_chords x nFrames
+    # nFrames is the number of frames in the chromagram, num_chords is the number of chords in the vocabulary
+
+    # viterbi takes an observation sequence and returns the most likely state sequence
+    # here, the observation sequence is the chromagram
+
+    
     (nrow, ncol) = np.shape(B)
     path = np.zeros((nrow, ncol))
     states = np.zeros((nrow, ncol))
     path[:, 0] = PI * B[:, 0]
+
+    # print("PI: ", PI)
+    # print("A: ", A)
+    # print("B: ", B)
 
     for i in range(1, ncol):
         for j in range(nrow):
@@ -121,7 +161,10 @@ def viterbi(PI, A, B):
 
 """Baum-Welch to fine-tune A,B, PI based on Emission Sequences"""
 
-def baum_welch():
+def baum_welch(PI, A, B):
     
-    # toy function at the moment, needs to be filled in.
+    # A: transition matrix - num_chords x num_chords
+    # B: observation matrix - num_chords x nFrames
+    # PI: initialisation matrix - num_chords x 1
+
     return None

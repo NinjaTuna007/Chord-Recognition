@@ -14,9 +14,11 @@ def get_templates(chords):
     templates = []
 
     for chord in chords:
-        if chord == "N":
+        if chord in templates_json:
+            templates.append(templates_json[chord])
+        else:
             continue
-        templates.append(templates_json[chord])
+            # "N": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "N1": [1,1,1,1,1,1,1,1,1,1,1,1]}
 
     return templates
 
@@ -109,7 +111,9 @@ def find_chords(
     xFrame = np.empty((nfft, nFrames))
     start = 0
     num_chords = len(templates)
+    # print(num_chords)
     chroma = np.empty((num_chords // 2, nFrames))
+    # print(chroma.shape)
     id_chord = np.zeros(nFrames, dtype="int32")
     timestamp = np.zeros(nFrames)
     max_cor = np.zeros(nFrames)
@@ -120,6 +124,11 @@ def find_chords(
         start = start + nfft - hop_size
         timestamp[n] = n * (nfft - hop_size) / fs
         chroma[:, n] = compute_chroma(xFrame[:, n], fs)
+
+        # normalize chroma
+        chroma[:, n] /= np.sum(chroma[:, n])
+
+        # print("Chroma for frame ", n, ": \n", chroma[:, n])
 
     if method == "match_template":
         # correlate 12D chroma vector with each of
@@ -140,6 +149,9 @@ def find_chords(
         # get max probability path from Viterbi algorithm
         (PI, A, B) = hmm.initialize(chroma, templates, chords, nested_cof)
         (path, states) = hmm.viterbi(PI, A, B)
+
+        # print("Path: ", path)
+        # print("States: ", states)
 
         # normalize path
         for i in range(nFrames):
@@ -230,6 +242,7 @@ def main(argv):
             fs,
             templates=templates,
             chords=chords[1:],
+            # chords=chords,
             nested_cof=nested_cof,
             method=method,
             plot=plot,
