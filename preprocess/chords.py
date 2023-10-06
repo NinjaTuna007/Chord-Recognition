@@ -229,7 +229,8 @@ def get_chord_params_by_mirex_category(category):
                 'pentacontrol': 0,
                 'hexacontrol': 0},
             'types_and_inv': {
-            }
+            },
+            'label_size': 13,
         },
         'MirexMajMin': {
             'controls': {
@@ -241,7 +242,8 @@ def get_chord_params_by_mirex_category(category):
                 # is inversion for type supported
                 'maj': False,
                 'min': False
-            }
+            },
+            'label_size': 25,
         },
         'MirexMajMinBass': {
             'controls': {
@@ -253,7 +255,8 @@ def get_chord_params_by_mirex_category(category):
                 # is inversion for type supported
                 'maj': True,
                 'min': True
-            }
+            },
+            'label_size': 73,
         },
         'MirexSevenths': {
             'controls': {
@@ -268,7 +271,8 @@ def get_chord_params_by_mirex_category(category):
                 '7': False,
                 'maj7': False,
                 'min7': False
-            }
+            },
+            'label_size': 61,
         },
         'MirexSeventhsBass': {
             'controls': {
@@ -283,7 +287,8 @@ def get_chord_params_by_mirex_category(category):
                 '7': True,
                 'maj7': True,
                 'min7': True
-            }
+            },
+            'label_size': 85,
         },
     }.get(category)
 

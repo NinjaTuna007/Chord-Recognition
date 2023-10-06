@@ -13,10 +13,10 @@ from .params import feature_params
 
 
 def get_feature(audiopath, feature_type):
-    x, sr = librosa.load(audiopath)
+    x, sr = librosa.load(audiopath, sr=feature_params[feature_type]['fs'])
     if feature_type == 'CQT':
-        X = np.abs(librosa.core.cqt(x, sr=sr, n_bins=feature_params[feature_type]['n_bins'], hop_length=feature_params[feature_type]['hop_length'], window='hamming', norm=2))
-    return X.T, sr
+        X = np.abs(librosa.core.cqt(x, sr=feature_params[feature_type]['fs'], n_bins=feature_params[feature_type]['n_bins'], hop_length=feature_params[feature_type]['hop_length'], window='hamming', norm=2))
+    return X.T
 
 def iter_songs_list(data_list):
     with open(data_list, 'r') as f:
@@ -35,9 +35,9 @@ def gen_train_data(feature_type, data_list, audio_path, gt_path, category):
     data = []
     for song_title, song_folder in iter_songs_list(data_list):
         print('collecting training data of ', song_title)
-        X, sr = get_feature(f'{audio_path}/{song_folder}', feature_type)
+        X = get_feature(f'{audio_path}/{song_folder}', feature_type)
 
-        y_nums = convert_gt(f'{gt_path}/{song_title}.lab', feature_params[feature_type]['hop_length'], sr, len(X), category)
+        y_nums = convert_gt(f'{gt_path}/{song_title}.lab', feature_params[feature_type]['hop_length'], feature_params[feature_type]['fs'], len(X), category)
 
         y = chords_nums_to_inds(y_nums, category)
         y = np.array(y)
