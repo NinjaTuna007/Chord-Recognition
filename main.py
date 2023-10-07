@@ -199,7 +199,7 @@ def find_chords(
         # correlate 12D chroma vector with each of
         # 24 major and minor chords
         for n in range(nFrames):
-            cor_vec = np.zeros(num_chords, dtype=object)
+            cor_vec = np.zeros(num_chords, dtype=object) # added dtype=object
             for ni in range(num_chords):
                 print(np.correlate(chroma[:, n], np.array(templates[ni])))
                 cor_vec[ni] = np.correlate(chroma[:, n], np.array(templates[ni]))

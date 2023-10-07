@@ -96,7 +96,7 @@ def compute_chroma(x, fs):
 
     fmin = 96
     fmax = 5250
-    bins = 30
+    bins = 30 # from 12 to 30
     M = 3
     nOctave = np.int32(np.ceil(np.log2(fmax / fmin)))
     CH = np.zeros(bins)
