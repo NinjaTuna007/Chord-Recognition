@@ -7,6 +7,7 @@ from chromagram import compute_chroma
 import hmm as hmm
 import librosa
 import pydub
+import subprocess
 
 def get_templates(chords):
     """read from JSON file to get chord templates"""
@@ -25,56 +26,128 @@ def get_templates(chords):
 def get_nested_circle_of_fifths():
     chords = [
         "N",
-        "G",
-        "G#",
-        "A",
-        "A#",
-        "B",
-        "C",
-        "C#",
-        "D",
-        "D#",
-        "E",
-        "F",
-        "F#",
-        "Gm",
-        "G#m",
-        "Am",
-        "A#m",
-        "Bm",
-        "Cm",
-        "C#m",
-        "Dm",
-        "D#m",
-        "Em",
-        "Fm",
-        "F#m",
+        "C:maj", 
+        "C#:maj",
+        "D:maj",
+        "D#:maj",
+        "E:maj", 
+        "F:maj", 
+        "F#:maj", 
+        "G:maj",
+        "G#:maj", 
+        "A:maj", 
+        "A#:maj",
+        "B:maj",
+        "C:min", 
+        "C#:min", 
+        "D:min", 
+        "D#:min", 
+        "E:min", 
+        "F:min", 
+        "F#:min", 
+        "G:min",
+        "G#:min", 
+        "A:min", 
+        "A#:min",
+        "B:min",
+        "C:7",
+        "C#:7",
+        "D:7", 
+        "D#:7", 
+        "E:7", 
+        "F:7", 
+        "F#:7", 
+        "G:7",
+        "G#:7", 
+        "A:7",
+        "A#:7", 
+        "B:7", 
+        "C:maj7", 
+        "C#:maj7", 
+        "D:maj7", 
+        "D#:maj7",
+        "E:maj7", 
+        "F:maj7", 
+        "F#:maj7",
+        "G:maj7", 
+        "G#:maj7", 
+        "A:maj7",
+        "A#:maj7", 
+        "B:maj7", 
+        "C:min7", 
+        "C#:min7", 
+        "D:min7", 
+        "D#:min7",
+        "E:min7", 
+        "F:min7",
+        "F#:min7",
+        "G:min7", 
+        "G#:min7", 
+        "A:min7", 
+        "A#:min7", 
+        "B:min7",
     ]
     nested_cof = [
-        "G",
-        "Bm",
-        "D",
-        "F#m",
-        "A",
-        "C#m",
-        "E",
-        "G#m",
-        "B",
-        "D#m",
-        "F#",
-        "A#m",
-        "C#",
-        "Fm",
-        "G#",
-        "Cm",
-        "D#",
-        "Gm",
-        "A#",
-        "Dm",
-        "F",
-        "Am",
-        "C",
-        "Em",
+        "C:maj", 
+        "C#:maj",
+        "D:maj",
+        "D#:maj",
+        "E:maj", 
+        "F:maj", 
+        "F#:maj", 
+        "G:maj",
+        "G#:maj", 
+        "A:maj", 
+        "A#:maj",
+        "B:maj",
+        "C:min", 
+        "C#:min", 
+        "D:min", 
+        "D#:min", 
+        "E:min", 
+        "F:min", 
+        "F#:min", 
+        "G:min",
+        "G#:min", 
+        "A:min", 
+        "A#:min",
+        "B:min",
+        "C:7",
+        "C#:7",
+        "D:7", 
+        "D#:7", 
+        "E:7", 
+        "F:7", 
+        "F#:7", 
+        "G:7",
+        "G#:7", 
+        "A:7",
+        "A#:7", 
+        "B:7", 
+        "C:maj7", 
+        "C#:maj7", 
+        "D:maj7", 
+        "D#:maj7",
+        "E:maj7", 
+        "F:maj7", 
+        "F#:maj7",
+        "G:maj7", 
+        "G#:maj7", 
+        "A:maj7",
+        "A#:maj7", 
+        "B:maj7", 
+        "C:min7", 
+        "C#:min7", 
+        "D:min7", 
+        "D#:min7",
+        "E:min7", 
+        "F:min7",
+        "F#:min7",
+        "G:min7", 
+        "G#:min7", 
+        "A:min7", 
+        "A#:min7", 
+        "B:min7",
     ]
     return chords, nested_cof
 
@@ -126,8 +199,9 @@ def find_chords(
         # correlate 12D chroma vector with each of
         # 24 major and minor chords
         for n in range(nFrames):
-            cor_vec = np.zeros(num_chords)
+            cor_vec = np.zeros(num_chords, dtype=object)
             for ni in range(num_chords):
+                print(np.correlate(chroma[:, n], np.array(templates[ni])))
                 cor_vec[ni] = np.correlate(chroma[:, n], np.array(templates[ni]))
             max_cor[n] = np.max(cor_vec)
             id_chord[n] = np.argmax(cor_vec) + 1
@@ -183,6 +257,8 @@ def find_chords(
 
     return timestamp, final_chords
 
+def install(name):
+    subprocess.call([sys.executable, '-m', 'pip', 'install', name])
 
 def main(argv):
     input_file = ""
@@ -213,6 +289,8 @@ def main(argv):
     directory = os.getcwd() + "/data/test_chords/"
     # read the input file
     #(fs, s) = read(directory + input_file)
+    #install("ffmpeg")
+    #install("ffprobe")
     audio = pydub.AudioSegment.from_file(f"{directory + input_file}")
 
     # extract sample rateS
