@@ -46,3 +46,19 @@ def init_logger(log_file):
     logger.addHandler(ch)
     logger.addHandler(fh)
 
+
+def save_checkpoint(model: nn.Module, path: str):
+    logging.info('Checkpoint: save to checkpoint %s' % path)
+    state_dict = model.state_dict()
+    torch.save(state_dict, path)
+
+def load_checkpoint(model: nn.Module, path: str) -> dict:
+    state_dict = torch.load(path)
+    model_state_dict = model.state_dict()
+    for k in state_dict:
+        if k in model_state_dict:
+            if state_dict[k].shape != model_state_dict[k].shape:
+                state_dict[k] = model_state_dict[k]
+                logging.warning('Ignore module: %s'% k)
+    model.load_state_dict(state_dict, strict=False)
+    return model

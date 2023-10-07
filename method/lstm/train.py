@@ -9,6 +9,7 @@ from tqdm import tqdm
 from pprint import pformat
 import argparse
 import utils
+import logging
 from .lstm import LSTMClassifier
 # from preprocess.generators import gen_train_data
 from preprocess import get_chord_params_by_mirex_category, feature_params
@@ -35,9 +36,7 @@ def get_model(args):
     input_size = 84
     # create model
     if args.model == 'LSTM':
-        model = LSTMClassifier(input_size=input_size, hidden_dim=args.hidden_dim, output_size=num_classes,
-                               num_layers=args.num_layers,
-                               device=args.device, bidirectional=args.bidirectional, dropout=args.dropout)
+        model = LSTMClassifier(input_size=input_size, hidden_dim=args.hidden_dim, output_size=num_classes, num_layers=args.num_layers, device=args.device, bidirectional=args.bidirectional, dropout=args.dropout)
         model = model.to(args.device)
     else:
         raise NotImplementedError
@@ -100,31 +99,26 @@ def train(args):
     criterion = nn.CrossEntropyLoss(ignore_index=-1)
     optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=args.sch_step_size, gamma=args.sch_gamma)
+    best_acc = 0
 
     for epoch in range(args.epochs):
         loss = train_epoch(model, train_loader, criterion, optimizer, epoch, args)
-        print('Epoch: [{}/{}], Loss: {}'.format(epoch+1, args.epochs, loss))
+        logging.info('Epoch: [{}/{}], Loss: {}'.format(epoch+1, args.epochs, loss))
         if (epoch + 1) % args.val_step == 0:
             train_acc = validate(model, train_loader, args.device)
             val_acc = validate(model, val_loader, args.device)
-            print('Epoch: [{}/{}], Train acc: {}, Val acc: {}'.format(epoch+1, args.epochs, train_acc, val_acc))
-        # if epoch % 10 == 0:
-        #     rand = np.random.randint(50)
-        #     torch.save({
-        #         'epoch': epoch,
-        #         'model_state_dict': model.state_dict(),
-        #         'optimizer_state_dict': optimizer.state_dict(),
-        #         'loss': loss,
-        #         'sch_state_dict': scheduler.state_dict()
-        #     }, f'checkpoint{rand}.tar')
-        #     print(f'saving as checkpoint{rand}.tar')
+            logging.info('Epoch: [{}/{}], Train acc: {}, Val acc: {}'.format(epoch+1, args.epochs, train_acc, val_acc))
+            if val_acc > best_acc:
+                best_acc = val_acc
+                # save checkpoint
+                utils.save_checkpoint(model, os.path.join(args.log_path, 'best.pth'))
 
         # disable dropout on last 10 epochs
         if args.epochs - epoch == 10:
             model.disable_dropout()
         scheduler.step()
 
-    print('Finished Training')
+    logging.info('Finished Training')
     acc = validate(model, val_loader, args.device, print_results=True)
 
     # save pretrained model
@@ -154,7 +148,7 @@ def validate(model, data_loader, device, print_results=False):
     if total:
         acc = 100 * correct / total
     if print_results:
-        print(f'Val acc: {acc}')
+        logging.info(f'Val acc: {acc}')
     return acc
 
 
@@ -166,6 +160,7 @@ def get_args():
     parser.add_argument('--len_sub_audio', default=40, type=int)
     parser.add_argument('--data_list', type=str, required=True)
     parser.add_argument('--data_snapshot_path', default='data/snapshot', type=str)
+    parser.add_argument('--log_path', default='log', type=str)
     parser.add_argument('--feature_type', type=str, default='CQT', choices=['CQT', 'STFT'])
     parser.add_argument('--model', type=str, required=True)
 
@@ -188,6 +183,10 @@ def get_args():
 if __name__ == '__main__':
     args = get_args()
     args.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    print('Arguments:\n' + pformat(args.__dict__))
     utils.fix_seed()
+    log_path = os.path.join(args.log_path, f'{args.model}_{args.category}_{args.feature_type}_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}')
+    os.makedirs(log_path, exist_ok=True)
+    utils.init_logger(os.path.join(log_path, 'train.log'))
+    args.log_path = log_path
+    logging.info('Arguments:\n' + pformat(args.__dict__))
     train(args)
