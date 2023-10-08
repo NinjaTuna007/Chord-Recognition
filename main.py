@@ -50,104 +50,32 @@ def get_nested_circle_of_fifths():
         "A:min", 
         "A#:min",
         "B:min",
-        "C:7",
-        "C#:7",
-        "D:7", 
-        "D#:7", 
-        "E:7", 
-        "F:7", 
-        "F#:7", 
-        "G:7",
-        "G#:7", 
-        "A:7",
-        "A#:7", 
-        "B:7", 
-        "C:maj7", 
-        "C#:maj7", 
-        "D:maj7", 
-        "D#:maj7",
-        "E:maj7", 
-        "F:maj7", 
-        "F#:maj7",
-        "G:maj7", 
-        "G#:maj7", 
-        "A:maj7",
-        "A#:maj7", 
-        "B:maj7", 
-        "C:min7", 
-        "C#:min7", 
-        "D:min7", 
-        "D#:min7",
-        "E:min7", 
-        "F:min7",
-        "F#:min7",
-        "G:min7", 
-        "G#:min7", 
-        "A:min7", 
-        "A#:min7", 
-        "B:min7",
     ]
     nested_cof = [
-        "C:maj", 
-        "C#:maj",
-        "D:maj",
-        "D#:maj",
-        "E:maj", 
-        "F:maj", 
-        "F#:maj", 
         "G:maj",
-        "G#:maj", 
-        "A:maj", 
-        "A#:maj",
-        "B:maj",
-        "C:min", 
-        "C#:min", 
-        "D:min", 
-        "D#:min", 
-        "E:min", 
-        "F:min", 
-        "F#:min", 
-        "G:min",
-        "G#:min", 
-        "A:min", 
-        "A#:min",
         "B:min",
-        "C:7",
-        "C#:7",
-        "D:7", 
-        "D#:7", 
-        "E:7", 
-        "F:7", 
-        "F#:7", 
-        "G:7",
-        "G#:7", 
-        "A:7",
-        "A#:7", 
-        "B:7", 
-        "C:maj7", 
-        "C#:maj7", 
-        "D:maj7", 
-        "D#:maj7",
-        "E:maj7", 
-        "F:maj7", 
-        "F#:maj7",
-        "G:maj7", 
-        "G#:maj7", 
-        "A:maj7",
-        "A#:maj7", 
-        "B:maj7", 
-        "C:min7", 
-        "C#:min7", 
-        "D:min7", 
-        "D#:min7",
-        "E:min7", 
-        "F:min7",
-        "F#:min7",
-        "G:min7", 
-        "G#:min7", 
-        "A:min7", 
-        "A#:min7", 
-        "B:min7",
+        "D:maj",
+        "F#:min",
+        "A:maj",
+        "C#:min",
+        "E:maj",
+        "G#:min",
+        "B:maj",
+        "D#:min",
+        "F#:maj",
+        "A#:min",
+        "C#:maj",
+        "F:min",
+        "G#:maj",
+        "C:min",
+        "D#:maj",
+        "G:min",
+        "A#:maj",
+        "D:min",
+        "F:maj",
+        "A:min",
+        "C:maj",
+        "E:min",
     ]
     return chords, nested_cof
 
@@ -175,8 +103,8 @@ def find_chords(
     """
 
     # framing audio, window length = 8192, hop size = 1024 and computing PCP
-    nfft = 8192
-    hop_size = 1024
+    nfft = 8192*4
+    hop_size = 1024*4
     nFrames = int(np.round(len(x) / (nfft - hop_size)))
     # zero padding to make signal length long enough to have nFrames
     x = np.append(x, np.zeros(nfft))
@@ -194,21 +122,22 @@ def find_chords(
         start = start + nfft - hop_size
         timestamp[n] = n * (nfft - hop_size) / fs
         chroma[:, n] = compute_chroma(xFrame[:, n], fs)
+        chroma[:, n] = chroma[:, n]/np.sum(chroma[:, n])
 
     if method == "match_template":
         # correlate 12D chroma vector with each of
         # 24 major and minor chords
         for n in range(nFrames):
-            cor_vec = np.zeros(num_chords, dtype=object) # added dtype=object
+            cor_vec = np.zeros(num_chords) # added dtype=object
             for ni in range(num_chords):
-                print(np.correlate(chroma[:, n], np.array(templates[ni])))
+                #print(np.correlate(chroma[:, n], np.array(templates[ni])))
                 cor_vec[ni] = np.correlate(chroma[:, n], np.array(templates[ni]))
             max_cor[n] = np.max(cor_vec)
             id_chord[n] = np.argmax(cor_vec) + 1
 
         # if max_cor[n] < threshold, then no chord is played
         # might need to change threshold value
-        id_chord[np.where(max_cor < 0.8 * np.max(max_cor))] = 0
+        id_chord[np.where(max_cor < 0.9 * np.max(max_cor))] = 0
         final_chords = [chords[cid] for cid in id_chord]
 
     elif method == "hmm":
@@ -291,20 +220,21 @@ def main(argv):
     #(fs, s) = read(directory + input_file)
     #install("ffmpeg")
     #install("ffprobe")
-    audio = pydub.AudioSegment.from_file(f"{directory + input_file}")
+    #audio = pydub.AudioSegment.from_file(f"{directory + input_file}")
+    x, fs = librosa.load(directory + input_file)
 
     # extract sample rateS
-    fs = audio.frame_rate
+    #fs = audio.frame_rate
 
     # retain only one channel
-    if audio.channels > 1:
-        audio = audio.split_to_mono()[0]
+    #if audio.channels > 1:
+        #audio = audio.split_to_mono()[0]
 
     # extract audio waveform as a numpy array
-    audio_data = np.array(audio.get_array_of_samples())
+    #audio_data = np.array(audio.get_array_of_samples())
 
     # normalize the data
-    x = audio_data / np.max(np.abs(audio_data))
+    #x = audio_data / np.max(np.abs(audio_data))
 
 
     # get chords and circle of fifths
@@ -330,8 +260,13 @@ def main(argv):
 
     # print chords with timestamps
     print("Time (s)", "Chord")
-    for n in range(len(timestamp)):
-        print("%.3f" % timestamp[n], final_chords[n])
+    for n in range(len(timestamp) - 1):
+        # if the chord is same as previous chord, then skip
+        if final_chords[n] == final_chords[n + 1]:
+            continue
+        else:
+            # print start time of chord, end time of chord, and chord
+            print(timestamp[n], timestamp[n + 1], final_chords[n])
 
 
 if __name__ == "__main__":
