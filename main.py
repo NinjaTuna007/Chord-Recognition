@@ -137,7 +137,7 @@ def find_chords(
 
         # if max_cor[n] < threshold, then no chord is played
         # might need to change threshold value
-        id_chord[np.where(max_cor < 0.4 * np.max(max_cor))] = 0
+        id_chord[np.where(max_cor < 0.1 * np.max(max_cor))] = 0
         final_chords = [chords[cid] for cid in id_chord]
 
     elif method == "hmm":
