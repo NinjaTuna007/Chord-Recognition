@@ -52,6 +52,8 @@ def get_nested_circle_of_fifths():
         "B:min",
     ]
     nested_cof = [
+        "C:maj",
+        "E:min",
         "G:maj",
         "B:min",
         "D:maj",
@@ -74,8 +76,6 @@ def get_nested_circle_of_fifths():
         "D:min",
         "F:maj",
         "A:min",
-        "C:maj",
-        "E:min",
     ]
     return chords, nested_cof
 
@@ -137,7 +137,7 @@ def find_chords(
 
         # if max_cor[n] < threshold, then no chord is played
         # might need to change threshold value
-        id_chord[np.where(max_cor < 0.9 * np.max(max_cor))] = 0
+        id_chord[np.where(max_cor < 0.8 * np.max(max_cor))] = 0
         final_chords = [chords[cid] for cid in id_chord]
 
     elif method == "hmm":
