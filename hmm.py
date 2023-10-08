@@ -163,8 +163,67 @@ def viterbi(PI, A, B):
 
 def baum_welch(PI, A, B):
     
+    # PI: initialisation matrix - num_chords x 1
     # A: transition matrix - num_chords x num_chords
     # B: observation matrix - num_chords x nFrames
-    # PI: initialisation matrix - num_chords x 1
 
-    return None
+    # initialize new PI, A, B
+    newPI = PI
+    newA = A
+    newB = B
+
+    # get number of chords and number of frames
+    (num_chords, nFrames) = np.shape(B)
+
+    # get observation sequence
+    # chroma = np.transpose(chroma)
+
+    # initialize forward and backward probabilities
+    forward = np.zeros((num_chords, nFrames))
+    backward = np.zeros((num_chords, nFrames))
+
+    # initialize xi and gamma matrices
+    xi = np.zeros((num_chords, num_chords, nFrames - 1))
+    gamma = np.zeros((num_chords, nFrames))
+
+    # dynamic programming to calculate forward and backward probabilities
+    
+    # forward probability
+    forward[:, 0] = PI * B[:, 0]
+
+    for i in range(1, nFrames):
+        for j in range(num_chords):
+            forward[j, i] = np.dot(forward[:, i - 1], A[:, j]) * B[j, i]
+
+    # backward probability
+    backward[:, nFrames - 1] = np.ones(num_chords)
+
+    for i in range(nFrames - 2, -1, -1):
+        for j in range(num_chords):
+            backward[j, i] = np.sum(
+                backward[:, i + 1] * A[j, :] * B[:, i + 1]
+            )
+
+    # calculate xi and gamma matrices
+    for i in range(nFrames - 1):
+        for j in range(num_chords):
+            for k in range(num_chords):
+                xi[j, k, i] = (
+                    forward[j, i]
+                    * A[j, k]
+                    * B[k, i + 1]
+                    * backward[k, i + 1]
+                )
+            xi[:, :, i] /= np.sum(xi[:, :, i])
+
+    for i in range(nFrames):
+        for j in range(num_chords):
+            gamma[j, i] = forward[j, i] * backward[j, i]
+        gamma[:, i] /= np.sum(gamma[:, i])
+
+    # re-estimate PI, A, B
+    newPI = gamma[:, 0]
+    newA = np.sum(xi, 2) / np.sum(gamma[:, :-1], axis=1).reshape((-1, 1))
+    newB = np.copy(B)
+
+    return newPI, newA, newB
