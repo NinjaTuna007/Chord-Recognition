@@ -7,6 +7,7 @@ import os
 import math
 import numpy as np
 import librosa
+import feature
 
 from .chords import convert_gt, chord_nums_to_inds, chords_nums_to_inds
 from .params import feature_params
@@ -15,7 +16,9 @@ from .params import feature_params
 def get_feature(audiopath, feature_type):
     x, sr = librosa.load(audiopath, sr=feature_params[feature_type]['fs'])
     if feature_type == 'CQT':
-        X = np.abs(librosa.core.cqt(x, sr=feature_params[feature_type]['fs'], n_bins=feature_params[feature_type]['n_bins'], hop_length=feature_params[feature_type]['hop_length'], window='hamming', norm=2))
+        X = feature.get_cqt(x, feature_param=feature_params[feature_type])
+    elif feature_type == 'MFCC':
+        X = feature.get_mfcc(x, feature_param=feature_params[feature_type])
     return X.T
 
 def iter_songs_list(data_list):

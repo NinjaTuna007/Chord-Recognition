@@ -12,7 +12,7 @@ import utils
 import logging
 from .lstm import LSTMClassifier
 # from preprocess.generators import gen_train_data
-from preprocess import get_chord_params_by_mirex_category, feature_params
+from preprocess import get_chord_params_by_mirex_category, feature_params, get_input_size
 
 def split_data_to_batch(data, len_sub_audio, feature_type):
     inds_len = int(len_sub_audio * (feature_params[feature_type]['fs'] / feature_params[feature_type]['hop_length']))
@@ -33,7 +33,7 @@ def split_data_to_batch(data, len_sub_audio, feature_type):
 
 def get_model(args):
     num_classes = get_chord_params_by_mirex_category(args.category)['label_size']
-    input_size = 84
+    input_size = get_input_size(args.feature_type)
     # create model
     if args.model == 'LSTM':
         model = LSTMClassifier(input_size=input_size, hidden_dim=args.hidden_dim, output_size=num_classes, num_layers=args.num_layers, device=args.device, bidirectional=args.bidirectional, dropout=args.dropout)
@@ -120,13 +120,6 @@ def train(args):
 
     logging.info('Finished Training')
     acc = validate(model, val_loader, args.device, print_results=True)
-
-    # save pretrained model
-    # if args.save_model:
-    #     torch.save(model.state_dict(),
-    #                f"pretrained/{args.model}_bi_{args.bidirectional}_{args.category}_{'librosa' if args.use_librosa else 'mauch'}_acc_"
-    #                f"{acc}_lr_{args.lr}_wd_{args.weight_decay}_nl_{args.num_layers}_hd_{args.hidden_dim}_ne_{args.epochs}"
-    #                f"_sss_{args.sch_step_size}_sg_{args.sch_gamma}_opt_{args.opt}")
     return model
 
 
@@ -161,7 +154,7 @@ def get_args():
     parser.add_argument('--data_list', type=str, required=True)
     parser.add_argument('--data_snapshot_path', default='data/snapshot', type=str)
     parser.add_argument('--log_path', default='log', type=str)
-    parser.add_argument('--feature_type', type=str, default='CQT', choices=['CQT', 'STFT'])
+    parser.add_argument('--feature_type', type=str, default='CQT', choices=['CQT', 'STFT', 'MFCC'])
     parser.add_argument('--model', type=str, required=True)
 
     parser.add_argument('--epochs', default=2, type=int)
