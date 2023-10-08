@@ -122,7 +122,7 @@ def find_chords(
         start = start + nfft - hop_size
         timestamp[n] = n * (nfft - hop_size) / fs
         chroma[:, n] = compute_chroma(xFrame[:, n], fs)
-        chroma[:, n] = chroma[:, n]/np.sum(chroma[:, n])
+        #chroma[:, n] = chroma[:, n]/np.sum(chroma[:, n])
 
     if method == "match_template":
         # correlate 12D chroma vector with each of
@@ -137,7 +137,7 @@ def find_chords(
 
         # if max_cor[n] < threshold, then no chord is played
         # might need to change threshold value
-        id_chord[np.where(max_cor < 0.8 * np.max(max_cor))] = 0
+        id_chord[np.where(max_cor < 0.4 * np.max(max_cor))] = 0
         final_chords = [chords[cid] for cid in id_chord]
 
     elif method == "hmm":
