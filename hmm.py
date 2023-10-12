@@ -28,7 +28,7 @@ def multivariate_gaussian(x, meu, cov):
 PI - initialisation matrix, #A - transition matrix, #B - observation matrix"""
 
 
-def initialize(chroma, templates, chords, nested_cof):
+def initialize(chroma, templates, chords, nested_cof, init_method = "theory"):
 
     """initialising PI with equal probabilities"""
     num_chords = len(chords)
@@ -61,65 +61,87 @@ def initialize(chroma, templates, chords, nested_cof):
     offset = 0
     # print(num_chords)
 
-    for i in range(num_chords):
-        if i == num_chords // 2:
-            offset = 0
-        tonic = offset
-        if i < num_chords // 2:
-            mediant = (tonic + 4) % (num_chords // 2)
-        else:
-            mediant = (tonic + 3) % (num_chords // 2)
-        dominant = (tonic + 7) % (num_chords // 2)
+    if init_method == "theory":
 
-        # weighted diagonal
-        # print(i)
+        for i in range(num_chords):
+            if i == num_chords // 2:
+                offset = 0
+            tonic = offset
+            if i < num_chords // 2:
+                mediant = (tonic + 4) % (num_chords // 2)
+            else:
+                mediant = (tonic + 3) % (num_chords // 2)
+            dominant = (tonic + 7) % (num_chords // 2)
 
-        cov_mat[i, tonic, tonic] = 1.0
-        cov_mat[i, mediant, mediant] = 1.0
-        cov_mat[i, dominant, dominant] = 1.0
+            # weighted diagonal
+            # print(i)
 
-        cov_mat[i, tonic, dominant] = 0.8
-        cov_mat[i, dominant, tonic] = 0.8
+            cov_mat[i, tonic, tonic] = 1.0
+            cov_mat[i, mediant, mediant] = 1.0
+            cov_mat[i, dominant, dominant] = 1.0
+
+            cov_mat[i, tonic, dominant] = 0.8
+            cov_mat[i, dominant, tonic] = 0.8
+            
+            cov_mat[i, mediant, dominant] = 0.8
+            cov_mat[i, dominant, mediant] = 0.8
+
+            cov_mat[i, tonic, mediant] = 0.6
+            cov_mat[i, mediant, tonic] = 0.6
+
+            # off-diagonal - matrix not positive semidefinite, hence determinant is negative
+            # for n in [tonic,mediant,dominant]:
+            #   for m in [tonic, mediant, dominant]:
+            #       if (n is tonic and m is mediant) or (n is mediant and m is tonic):
+            #           cov_mat[i,n,m] = 0.6
+            #       else:
+            #           cov_mat[i,n,m] = 0.8
+
+            # filling non zero diagonals
+            for j in range(num_chords // 2):
+                if cov_mat[i, j, j] == 0:
+                    cov_mat[i, j, j] = 0.2
+            offset += 1
+
+        """observation matrix B is a multivariate Gaussian calculated from mean vector and 
+        covariance matrix"""
+
+        for m in range(nFrames):
+            for n in range(num_chords):
+
+                # print("n: ", n)
+                # print("m: ", m)
+                # print("chroma: ", chroma[:, m])
+                # print("meu_mat: ", meu_mat[n, :])
+                # print("cov_mat: \n", cov_mat[n, :, :])
+                # print(wow_matrix)
+
+
+                wow_prob = multivariate_gaussian(
+                    chroma[:, m], meu_mat[n, :], cov_mat[n, :, :]
+                )
+                # print("wow_matrix: ", wow_prob)
+                B[n, m] = wow_prob
         
-        cov_mat[i, mediant, dominant] = 0.8
-        cov_mat[i, dominant, mediant] = 0.8
+    elif init_method == "random":
+        # initialize PI matrix with random values
+        PI = np.random.rand(num_chords)
+        # normalize PI matrix
+        PI /= np.sum(PI)
 
-        cov_mat[i, tonic, mediant] = 0.6
-        cov_mat[i, mediant, tonic] = 0.6
+        # initialize A matrix with random values
+        A = np.random.rand(num_chords, num_chords)
+        # normalize A matrix
+        for i in range(num_chords):
+            A[i, :] /= np.sum(A[i, :])
 
-        # off-diagonal - matrix not positive semidefinite, hence determinant is negative
-        # for n in [tonic,mediant,dominant]:
-        #   for m in [tonic, mediant, dominant]:
-        #       if (n is tonic and m is mediant) or (n is mediant and m is tonic):
-        #           cov_mat[i,n,m] = 0.6
-        #       else:
-        #           cov_mat[i,n,m] = 0.8
+        # initialize B matrix with random values
+        B = np.random.rand(num_chords, nFrames)
+        # normalize B matrix
+        for i in range(nFrames):
+            B[:, i] /= np.sum(B[:, i])
 
-        # filling non zero diagonals
-        for j in range(num_chords // 2):
-            if cov_mat[i, j, j] == 0:
-                cov_mat[i, j, j] = 0.2
-        offset += 1
-
-    """observation matrix B is a multivariate Gaussian calculated from mean vector and 
-    covariance matrix"""
-
-    for m in range(nFrames):
-        for n in range(num_chords):
-
-            # print("n: ", n)
-            # print("m: ", m)
-            # print("chroma: ", chroma[:, m])
-            # print("meu_mat: ", meu_mat[n, :])
-            # print("cov_mat: \n", cov_mat[n, :, :])
-            # print(wow_matrix)
-
-
-            wow_prob = multivariate_gaussian(
-                chroma[:, m], meu_mat[n, :], cov_mat[n, :, :]
-            )
-            # print("wow_matrix: ", wow_prob)
-            B[n, m] = wow_prob
+    
     
     # print(bow_wow_matrix)
 
@@ -161,69 +183,117 @@ def viterbi(PI, A, B):
 
 """Baum-Welch to fine-tune A,B, PI based on Emission Sequences"""
 
-def baum_welch(PI, A, B):
-    
-    # PI: initialisation matrix - num_chords x 1
-    # A: transition matrix - num_chords x num_chords
-    # B: observation matrix - num_chords x nFrames
+def baum_welch(PI, A, B, max_iters = 10, tol = 1e-6):
 
-    # initialize new PI, A, B
-    newPI = PI
-    newA = A
-    newB = B
+    # store original PI, A, B
+    PI_0 = PI
+    A_0 = A
+    B_0 = B
 
-    # get number of chords and number of frames
-    (num_chords, nFrames) = np.shape(B)
+    old_log_prob = -np.inf
+    init_log_prob = -np.inf
 
-    # get observation sequence
-    # chroma = np.transpose(chroma)
+    for iter in range(max_iters):
+        
+        # PI: initialisation matrix - num_chords x 1
+        # A: transition matrix - num_chords x num_chords
+        # B: observation matrix - num_chords x nFrames
 
-    # initialize forward and backward probabilities
-    forward = np.zeros((num_chords, nFrames))
-    backward = np.zeros((num_chords, nFrames))
+        # initialize new PI, A, B
+        # newPI = PI
+        # newA = A
+        # newB = B
 
-    # initialize xi and gamma matrices
-    xi = np.zeros((num_chords, num_chords, nFrames - 1))
-    gamma = np.zeros((num_chords, nFrames))
+        # print("Iteration: ", iter)
+        # print("PI: ", PI)
+        # print("A: ", A)
 
-    # dynamic programming to calculate forward and backward probabilities
-    
-    # forward probability
-    forward[:, 0] = PI * B[:, 0]
+        # get number of chords and number of frames
+        (num_chords, nFrames) = np.shape(B)
 
-    for i in range(1, nFrames):
-        for j in range(num_chords):
-            forward[j, i] = np.dot(forward[:, i - 1], A[:, j]) * B[j, i]
+        # get observation sequence
+        # chroma = np.transpose(chroma)
 
-    # backward probability
-    backward[:, nFrames - 1] = np.ones(num_chords)
+        # initialize forward and backward probabilities
+        forward = np.zeros((num_chords, nFrames))
+        forward_norm = np.zeros((nFrames))
+        
+        backward = np.zeros((num_chords, nFrames))
+        # backward_norm = np.zeros((nFrames))
 
-    for i in range(nFrames - 2, -1, -1):
-        for j in range(num_chords):
-            backward[j, i] = np.sum(
-                backward[:, i + 1] * A[j, :] * B[:, i + 1]
-            )
+        # initialize xi and gamma matrices
+        xi = np.zeros((num_chords, num_chords, nFrames - 1))
+        gamma = np.zeros((num_chords, nFrames))
 
-    # calculate xi and gamma matrices
-    for i in range(nFrames - 1):
-        for j in range(num_chords):
-            for k in range(num_chords):
-                xi[j, k, i] = (
-                    forward[j, i]
-                    * A[j, k]
-                    * B[k, i + 1]
-                    * backward[k, i + 1]
+        # dynamic programming to calculate forward and backward probabilities
+        
+        # print(PI.shape)
+
+        # forward probability
+        forward[:, 0] = PI * B[:, 0]
+
+        # normalization factor
+        forward_norm[0] = 1/np.sum(forward[:, 0])
+        forward[:, 0] *= forward_norm[0]
+
+        for i in range(1, nFrames):
+            for j in range(num_chords):
+                forward[j, i] = np.dot(forward[:, i - 1], A[:, j]) * B[j, i]
+
+            # normalization factor
+            forward_norm[i] = 1/np.sum(forward[:, i])
+            forward[:, i] *= forward_norm[i]
+
+        # find cumulative probability of observation sequence
+        log_prob = -np.sum(np.log(forward_norm))
+
+        # store initial log probability
+        if iter == 0:
+            init_log_prob = log_prob
+
+        # check for convergence
+        if abs(np.power(10,log_prob) - np.power(10,old_log_prob)) < tol:
+            break
+
+        # backward probability
+        backward[:, nFrames - 1] = np.ones(num_chords) * forward_norm[nFrames - 1]
+
+        # normalization factor
+
+        for i in range(nFrames - 2, -1, -1):
+            for j in range(num_chords):
+                backward[j, i] = np.sum(
+                    backward[:, i + 1] * A[j, :] * B[:, i + 1] * forward_norm[i + 1]
                 )
-            xi[:, :, i] /= np.sum(xi[:, :, i])
 
-    for i in range(nFrames):
-        for j in range(num_chords):
-            gamma[j, i] = forward[j, i] * backward[j, i]
-        gamma[:, i] /= np.sum(gamma[:, i])
+        # calculate xi and gamma matrices
+        for i in range(nFrames - 1):
+            for j in range(num_chords):
+                for k in range(num_chords):
+                    xi[j, k, i] = (
+                        forward[j, i]
+                        * A[j, k]
+                        * B[k, i + 1]
+                        * backward[k, i + 1]
+                    )
+                xi[:, :, i] /= np.sum(xi[:, :, i])
 
-    # re-estimate PI, A, B
-    newPI = gamma[:, 0]
-    newA = np.sum(xi, 2) / np.sum(gamma[:, :-1], axis=1).reshape((-1, 1))
-    newB = np.copy(B)
+        for i in range(nFrames):
+            for j in range(num_chords):
+                gamma[j, i] = forward[j, i] * backward[j, i]
+            gamma[:, i] /= np.sum(gamma[:, i])
 
-    return newPI, newA, newB
+        # re-estimate PI, A, B
+        PI = gamma[:, 0]
+        A = np.sum(xi, 2) / np.sum(gamma[:, :-1], axis=1).reshape((-1, 1))
+        # freeze B matrix
+        # B = np.copy(B)
+
+        # store old log probability
+        old_log_prob = log_prob
+
+    if old_log_prob > init_log_prob:
+        return PI, A, B
+    else:
+        # return original PI, A, B
+        return PI_0, A_0, B_0

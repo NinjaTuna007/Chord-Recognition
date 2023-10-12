@@ -103,8 +103,8 @@ def find_chords(
     """
 
     # framing audio, window length = 8192, hop size = 1024 and computing PCP
-    nfft = 8192
-    hop_size = 1024
+    nfft = int(8192 * 0.5)
+    hop_size = int(1024 * 0.5)
     nFrames = int(np.round(len(x) / (nfft - hop_size)))
     # zero padding to make signal length long enough to have nFrames
     x = np.append(x, np.zeros(nfft))
@@ -147,7 +147,10 @@ def find_chords(
 
     elif method == "hmm":
         # get max probability path from Viterbi algorithm
-        (PI, A, B) = hmm.initialize(chroma, templates, chords, nested_cof)
+        (PI, A, B) = hmm.initialize(chroma, templates, chords, nested_cof, init_method = "theory")
+        # print(PI.shape)
+        # use baum-welch algorithm to train hmm
+        (PI, A, B) = hmm.baum_welch(PI, A, B)
         (path, states) = hmm.viterbi(PI, A, B)
 
         # print("Path: ", path)
