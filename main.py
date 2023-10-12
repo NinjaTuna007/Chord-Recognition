@@ -5,7 +5,9 @@ from scipy.io.wavfile import read
 import json
 from chromagram import compute_chroma
 import hmm as hmm
-
+import librosa
+import pydub
+import subprocess
 
 def get_templates(chords):
     """read from JSON file to get chord templates"""
@@ -26,56 +28,56 @@ def get_templates(chords):
 def get_nested_circle_of_fifths():
     chords = [
         "N",
-        "G",
-        "G#",
-        "A",
-        "A#",
-        "B",
-        "C",
-        "C#",
-        "D",
-        "D#",
-        "E",
-        "F",
-        "F#",
-        "Gm",
-        "G#m",
-        "Am",
-        "A#m",
-        "Bm",
-        "Cm",
-        "C#m",
-        "Dm",
-        "D#m",
-        "Em",
-        "Fm",
-        "F#m",
+        "C:maj", 
+        "C#:maj",
+        "D:maj",
+        "D#:maj",
+        "E:maj", 
+        "F:maj", 
+        "F#:maj", 
+        "G:maj",
+        "G#:maj", 
+        "A:maj", 
+        "A#:maj",
+        "B:maj",
+        "C:min", 
+        "C#:min", 
+        "D:min", 
+        "D#:min", 
+        "E:min", 
+        "F:min", 
+        "F#:min", 
+        "G:min",
+        "G#:min", 
+        "A:min", 
+        "A#:min",
+        "B:min",
     ]
     nested_cof = [
-        "G",
-        "Bm",
-        "D",
-        "F#m",
-        "A",
-        "C#m",
-        "E",
-        "G#m",
-        "B",
-        "D#m",
-        "F#",
-        "A#m",
-        "C#",
-        "Fm",
-        "G#",
-        "Cm",
-        "D#",
-        "Gm",
-        "A#",
-        "Dm",
-        "F",
-        "Am",
-        "C",
-        "Em",
+        "C:maj",
+        "E:min",
+        "G:maj",
+        "B:min",
+        "D:maj",
+        "F#:min",
+        "A:maj",
+        "C#:min",
+        "E:maj",
+        "G#:min",
+        "B:maj",
+        "D#:min",
+        "F#:maj",
+        "A#:min",
+        "C#:maj",
+        "F:min",
+        "G#:maj",
+        "C:min",
+        "D#:maj",
+        "G:min",
+        "A#:maj",
+        "D:min",
+        "F:maj",
+        "A:min",
     ]
     return chords, nested_cof
 
@@ -124,6 +126,12 @@ def find_chords(
         start = start + nfft - hop_size
         timestamp[n] = n * (nfft - hop_size) / fs
         chroma[:, n] = compute_chroma(xFrame[:, n], fs)
+        #chroma[:, n] = chroma[:, n]/np.sum(chroma[:, n])
+
+        # normalize chroma
+        chroma[:, n] /= np.sum(chroma[:, n])
+
+        # print("Chroma for frame ", n, ": \n", chroma[:, n])
 
         # normalize chroma
         chroma[:, n] /= np.sum(chroma[:, n])
@@ -134,15 +142,16 @@ def find_chords(
         # correlate 12D chroma vector with each of
         # 24 major and minor chords
         for n in range(nFrames):
-            cor_vec = np.zeros(num_chords)
+            cor_vec = np.zeros(num_chords) # added dtype=object
             for ni in range(num_chords):
+                #print(np.correlate(chroma[:, n], np.array(templates[ni])))
                 cor_vec[ni] = np.correlate(chroma[:, n], np.array(templates[ni]))
             max_cor[n] = np.max(cor_vec)
             id_chord[n] = np.argmax(cor_vec) + 1
 
         # if max_cor[n] < threshold, then no chord is played
         # might need to change threshold value
-        id_chord[np.where(max_cor < 0.8 * np.max(max_cor))] = 0
+        id_chord[np.where(max_cor < 0.1 * np.max(max_cor))] = 0
         final_chords = [chords[cid] for cid in id_chord]
 
     elif method == "hmm":
@@ -164,6 +173,7 @@ def find_chords(
         final_chords = []
         indices = np.argmax(path, axis=0)
         final_states = np.zeros(nFrames)
+        #final_states = []
 
         # find no chord zone
         set_zero = np.where(np.max(path, axis=0) < 0.3 * np.max(path))[0]
@@ -196,6 +206,8 @@ def find_chords(
 
     return timestamp, final_chords
 
+def install(name):
+    subprocess.call([sys.executable, '-m', 'pip', 'install', name])
 
 def main(argv):
     input_file = ""
@@ -225,9 +237,25 @@ def main(argv):
     print("Method is ", method)
     directory = os.getcwd() + "/data/test_chords/"
     # read the input file
-    (fs, s) = read(directory + input_file)
-    # convert to mono if file is stereo
-    x = s[:, 0] if len(s.shape) else s
+    #(fs, s) = read(directory + input_file)
+    #install("ffmpeg")
+    #install("ffprobe")
+    #audio = pydub.AudioSegment.from_file(f"{directory + input_file}")
+    x, fs = librosa.load(directory + input_file)
+
+    # extract sample rateS
+    #fs = audio.frame_rate
+
+    # retain only one channel
+    #if audio.channels > 1:
+        #audio = audio.split_to_mono()[0]
+
+    # extract audio waveform as a numpy array
+    #audio_data = np.array(audio.get_array_of_samples())
+
+    # normalize the data
+    #x = audio_data / np.max(np.abs(audio_data))
+
 
     # get chords and circle of fifths
     chords, nested_cof = get_nested_circle_of_fifths()
@@ -253,8 +281,13 @@ def main(argv):
 
     # print chords with timestamps
     print("Time (s)", "Chord")
-    for n in range(len(timestamp)):
-        print("%.3f" % timestamp[n], final_chords[n])
+    for n in range(len(timestamp) - 1):
+        # if the chord is same as previous chord, then skip
+        if final_chords[n] == final_chords[n + 1]:
+            continue
+        else:
+            # print start time of chord, end time of chord, and chord
+            print(timestamp[n], timestamp[n + 1], final_chords[n])
 
 
 if __name__ == "__main__":
