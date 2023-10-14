@@ -208,9 +208,6 @@ def find_chords(
 
     return timestamp, final_chords
 
-def install(name):
-    subprocess.call([sys.executable, '-m', 'pip', 'install', name])
-
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input_file", type=str, help="input file")
@@ -219,32 +216,15 @@ def get_args():
     args = parser.parse_args()
     return args
 
-def main():
-    args = get_args()
+def main(args):
 
     print("Input file is ", args.input_file)
     print("Method is ", args.method)
     directory = os.getcwd() + "/data/test_chords/"
     # read the input file
     #(fs, s) = read(directory + args.input_file)
-    #install("ffmpeg")
-    #install("ffprobe")
     #audio = pydub.AudioSegment.from_file(f"{directory + args.input_file}")
     x, fs = librosa.load(directory + args.input_file)
-
-    # extract sample rateS
-    #fs = audio.frame_rate
-
-    # retain only one channel
-    #if audio.channels > 1:
-        #audio = audio.split_to_mono()[0]
-
-    # extract audio waveform as a numpy array
-    #audio_data = np.array(audio.get_array_of_samples())
-
-    # normalize the data
-    #x = audio_data / np.max(np.abs(audio_data))
-
 
     # get chords and circle of fifths
     chords, nested_cof = get_nested_circle_of_fifths()
@@ -280,4 +260,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    args = get_args()
+    main(args)
