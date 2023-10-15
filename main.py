@@ -107,8 +107,8 @@ def find_chords(
     """
 
     # framing audio, window length = 8192, hop size = 1024 and computing PCP
-    nfft = int(8192)
-    hop_size = int(1024)
+    nfft = int(8192 * 2.5)
+    hop_size = int(1024 * 2.5)
     nFrames = int(np.round(len(x) / (nfft - hop_size)))
     # zero padding to make signal length long enough to have nFrames
     x = np.append(x, np.zeros(nfft))
@@ -148,11 +148,11 @@ def find_chords(
 
         # print("Chroma for frame ", n, ": \n", chroma[:, n])
 
-    for n in range(nFrames):
+    # for n in range(nFrames):
         # normalize chroma
         # chroma[:, n] /= np.sum(chroma[:, n])
         # print("Chroma for frame ", n, ": \n", chroma[:, n])
-        continue
+        # continue
 
     if method == "match_template":
         # correlate 12D chroma vector with each of
@@ -175,7 +175,7 @@ def find_chords(
         (PI, A, B) = hmm.initialize(chroma, templates, chords, nested_cof, init_method = "theory")
         # print(PI.shape)
         # use baum-welch algorithm to train hmm
-        # (PI, A, B) = hmm.baum_welch(PI, A, B)
+        (PI, A, B) = hmm.baum_welch(PI, A, B)
         (path, states) = hmm.viterbi_log(PI, A, B)
 
         # print("Path: ", path)
@@ -239,6 +239,9 @@ def main(args):
     #(fs, s) = read(directory + args.input_file)
     #audio = pydub.AudioSegment.from_file(f"{directory + args.input_file}")
     x, fs = librosa.load(directory + args.input_file)
+
+    # Suppress percussive elements
+    x = librosa.effects.harmonic(x, margin=4)
 
     # get chords and circle of fifths
     chords, nested_cof = get_nested_circle_of_fifths()
