@@ -105,8 +105,8 @@ def find_chords(
     """
 
     # framing audio, window length = 8192, hop size = 1024 and computing PCP
-    nfft = int(8192 * 0.5)
-    hop_size = int(1024 * 0.5)
+    nfft = int(8192)
+    hop_size = int(1024)
     nFrames = int(np.round(len(x) / (nfft - hop_size)))
     # zero padding to make signal length long enough to have nFrames
     x = np.append(x, np.zeros(nfft))
@@ -126,16 +126,12 @@ def find_chords(
         start = start + nfft - hop_size
         timestamp[n] = n * (nfft - hop_size) / fs
         chroma[:, n] = compute_chroma(xFrame[:, n], fs)
-        #chroma[:, n] = chroma[:, n]/np.sum(chroma[:, n])
-
-        # normalize chroma
-        chroma[:, n] /= np.sum(chroma[:, n])
 
         # print("Chroma for frame ", n, ": \n", chroma[:, n])
 
+        
         # normalize chroma
         chroma[:, n] /= np.sum(chroma[:, n])
-
         # print("Chroma for frame ", n, ": \n", chroma[:, n])
 
     if method == "match_template":
@@ -159,8 +155,8 @@ def find_chords(
         (PI, A, B) = hmm.initialize(chroma, templates, chords, nested_cof, init_method = "theory")
         # print(PI.shape)
         # use baum-welch algorithm to train hmm
-        (PI, A, B) = hmm.baum_welch(PI, A, B)
-        (path, states) = hmm.viterbi(PI, A, B)
+        # (PI, A, B) = hmm.baum_welch(PI, A, B)
+        (path, states) = hmm.viterbi_log(PI, A, B)
 
         # print("Path: ", path)
         # print("States: ", states)
@@ -281,13 +277,20 @@ def main(argv):
 
     # print chords with timestamps
     print("Time (s)", "Chord")
+    start_time = timestamp[0]
     for n in range(len(timestamp) - 1):
         # if the chord is same as previous chord, then skip
         if final_chords[n] == final_chords[n + 1]:
             continue
         else:
+
             # print start time of chord, end time of chord, and chord
-            print(timestamp[n], timestamp[n + 1], final_chords[n])
+            print(start_time, timestamp[n + 1], final_chords[n])
+            start_time = timestamp[n + 1]
+
+    # print last chord if start time of last chord is not same as end time of previous chord
+    if start_time != timestamp[-1]:
+        print(start_time, timestamp[-1], final_chords[-1])
 
 
 if __name__ == "__main__":

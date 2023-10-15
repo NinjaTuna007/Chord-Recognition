@@ -161,6 +161,8 @@ def viterbi(PI, A, B):
     # viterbi takes an observation sequence and returns the most likely state sequence
     # here, the observation sequence is the chromagram
 
+    # ToDo for SDU: convert this to log space to avoid underflow
+
     
     (nrow, ncol) = np.shape(B)
     path = np.zeros((nrow, ncol))
@@ -174,10 +176,42 @@ def viterbi(PI, A, B):
     for i in range(1, ncol):
         for j in range(nrow):
             s = [(path[k, i - 1] * A[k, j] * B[j, i], k) for k in range(nrow)]
+            # print("s: ", s)
             (prob, state) = max(s)
             path[j, i] = prob
             states[j, i - 1] = state
 
+    return (path, states)
+
+
+def viterbi_log(PI, A, B):
+    # PI represents initialisation matrix - num_chords x 1
+    # A represents transition matrix - num_chords x num_chords
+    # B represents observation matrix - num_chords x nFrames
+    # nFrames is the number of frames in the chromagram, num_chords is the number of chords in the vocabulary
+
+    # viterbi takes an observation sequence and returns the most likely state sequence
+    # here, the observation sequence is the chromagram
+
+    # Convert probabilities to log space to avoid underflow
+    PI = np.log(PI)
+    A = np.log(A)
+    B = np.log(B)
+
+    (nrow, ncol) = np.shape(B)
+    path = np.zeros((nrow, ncol))
+    states = np.zeros((nrow, ncol))
+    path[:, 0] = PI + B[:, 0]
+
+    for i in range(1, ncol):
+        for j in range(nrow):
+            s = [(path[k, i - 1] + A[k, j] + B[j, i], k) for k in range(nrow)]
+            (prob, state) = max(s)
+            path[j, i] = prob
+            states[j, i - 1] = state
+
+    # Convert back to probabilities
+    path = np.exp(path)
     return (path, states)
 
 
