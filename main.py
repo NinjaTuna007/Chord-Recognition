@@ -127,14 +127,32 @@ def find_chords(
         xFrame[:, n] = x[start : start + nfft]
         start = start + nfft - hop_size
         timestamp[n] = n * (nfft - hop_size) / fs
-        chroma[:, n] = compute_chroma(xFrame[:, n], fs)
+        # chroma[:, n] = compute_chroma(xFrame[:, n], fs)
+
+    # chroma using librosa
+    chroma = librosa.feature.chroma_stft(y=x, sr=fs, n_fft=nfft, hop_length=hop_size)
+
+    # visualize the chroma
+    # plt.figure()
+    # plt.imshow(chroma, cmap='gray_r', origin='lower', aspect='auto')
+    # plt.xlabel('Time (frames)')
+    # plt.ylabel('Chroma')
+    # plt.title('Chromagram')
+    # plt.show()
+    plt.figure(figsize=(10, 5))
+    librosa.display.specshow(chroma, sr=fs, x_axis="frames",  y_axis="chroma")
+    plt.title("Chroma Features")
+    plt.colorbar()
+    plt.tight_layout()
+    plt.show()
 
         # print("Chroma for frame ", n, ": \n", chroma[:, n])
 
-        
+    for n in range(nFrames):
         # normalize chroma
-        chroma[:, n] /= np.sum(chroma[:, n])
+        # chroma[:, n] /= np.sum(chroma[:, n])
         # print("Chroma for frame ", n, ": \n", chroma[:, n])
+        continue
 
     if method == "match_template":
         # correlate 12D chroma vector with each of
