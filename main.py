@@ -8,6 +8,8 @@ import hmm as hmm
 import librosa
 import pydub
 import subprocess
+import argparse
+
 
 def get_templates(chords):
     """read from JSON file to get chord templates"""
@@ -202,56 +204,23 @@ def find_chords(
 
     return timestamp, final_chords
 
-def install(name):
-    subprocess.call([sys.executable, '-m', 'pip', 'install', name])
+def get_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--input_file", type=str, help="input file")
+    parser.add_argument("-m", "--method", type=str, default="match_template", help="method")
+    parser.add_argument("-p", "--plot", type=bool, help="plot")
+    args = parser.parse_args()
+    return args
 
-def main(argv):
-    input_file = ""
-    method = ""
-    plot = False
-    has_method = False
-    try:
-        opts, args = getopt.getopt(argv, "hi:m:p:", ["ifile=", "method=", "plot="])
-    except getopt.GetoptError:
-        print("main.py -i <inputfile> -m <method>")
-        sys.exit(2)
-    for opt, arg in opts:
-        if opt == "-h":
-            print("main.py -i <input_file> -m <method> -p <plot>")
-            sys.exit()
-        elif opt in ("-i", "--ifile"):
-            input_file = arg
-        elif opt in ("-m", "--method"):
-            method = arg
-            has_method = True
-        elif opt in ("-p", "--plot"):
-            plot = arg
-    if not has_method:
-        method = "match_template"
+def main(args):
 
-    print("Input file is ", input_file)
-    print("Method is ", method)
+    print("Input file is ", args.input_file)
+    print("Method is ", args.method)
     directory = os.getcwd() + "/data/test_chords/"
     # read the input file
-    #(fs, s) = read(directory + input_file)
-    #install("ffmpeg")
-    #install("ffprobe")
-    #audio = pydub.AudioSegment.from_file(f"{directory + input_file}")
-    x, fs = librosa.load(directory + input_file)
-
-    # extract sample rateS
-    #fs = audio.frame_rate
-
-    # retain only one channel
-    #if audio.channels > 1:
-        #audio = audio.split_to_mono()[0]
-
-    # extract audio waveform as a numpy array
-    #audio_data = np.array(audio.get_array_of_samples())
-
-    # normalize the data
-    #x = audio_data / np.max(np.abs(audio_data))
-
+    #(fs, s) = read(directory + args.input_file)
+    #audio = pydub.AudioSegment.from_file(f"{directory + args.input_file}")
+    x, fs = librosa.load(directory + args.input_file)
 
     # get chords and circle of fifths
     chords, nested_cof = get_nested_circle_of_fifths()
@@ -259,9 +228,9 @@ def main(argv):
     templates = get_templates(chords)
 
     # find the chords
-    if method == "match_template":
+    if args.method == "match_template":
         timestamp, final_chords = find_chords(
-            x, fs, templates=templates, chords=chords, method=method, plot=plot
+            x, fs, templates=templates, chords=chords, method=args.method, plot=args.plot
         )
     else:
         timestamp, final_chords = find_chords(
@@ -271,8 +240,8 @@ def main(argv):
             chords=chords[1:],
             # chords=chords,
             nested_cof=nested_cof,
-            method=method,
-            plot=plot,
+            method=args.method,
+            plot=args.plot,
         )
 
     # print chords with timestamps
@@ -294,4 +263,5 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    args = get_args()
+    main(args)
