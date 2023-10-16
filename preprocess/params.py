@@ -20,7 +20,7 @@ feature_params = {
         'fs': 44100,
     },
     'CHROMA_STFT': {
-        'hop_length': 512,
+        'hop_length': 4096,
         'fs': 44100,
     },
 }
