@@ -2,7 +2,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as plt
 import librosa
-from .match_template import find_chords
+from .hmm import find_chords
 from preprocess import gen_train_data
 from preprocess.chords import chord_to_categories, chords_nums_to_inds
 

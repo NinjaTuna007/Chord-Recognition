@@ -3,6 +3,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--len_sub_audio', default=40, type=int)
 parser.add_argument('--log_path', default='log', type=str)
+parser.add_argument('--snapshot_path', type=str)
 parser.add_argument('--feature_type', type=str, default='CQT', choices=['CQT', 'STFT', 'MFCC'])
 parser.add_argument('--model', type=str, required=True)
 
