@@ -107,8 +107,8 @@ def find_chords(
     """
 
     # framing audio, window length = 8192, hop size = 1024 and computing PCP
-    nfft = int(8192 * 0.25)
-    hop_size = int(1024 * 0.25)
+    nfft = int(8192 * 0.5)
+    hop_size = int(1024 * 0.5)
     nFrames = int(np.round(len(x) / (nfft - hop_size)))
     # zero padding to make signal length long enough to have nFrames
     x = np.append(x, np.zeros(nfft))
