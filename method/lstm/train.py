@@ -7,12 +7,12 @@ import torch.nn as nn
 from tensorboardX import SummaryWriter
 from tqdm import tqdm
 from pprint import pformat
-import argparse
 import utils
 import logging
 from .lstm import LSTMClassifier
 # from preprocess.generators import gen_train_data
 from preprocess import get_chord_params_by_mirex_category, feature_params, get_input_size
+from .args import get_args
 
 def split_data_to_batch(data, len_sub_audio, feature_type):
     inds_len = int(len_sub_audio * (feature_params[feature_type]['fs'] / feature_params[feature_type]['hop_length']))
@@ -143,35 +143,6 @@ def validate(model, data_loader, device, print_results=False):
     if print_results:
         logging.info(f'Val acc: {acc}')
     return acc
-
-
-def get_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--audio_path', default='data/audio', type=str)
-    parser.add_argument('--gt_path', default='data/gt', type=str)
-    parser.add_argument('--category', default='MirexMajMin', type=str, choices=['MirexMajMin'])
-    parser.add_argument('--len_sub_audio', default=40, type=int)
-    parser.add_argument('--data_list', type=str, required=True)
-    parser.add_argument('--data_snapshot_path', default='data/snapshot', type=str)
-    parser.add_argument('--log_path', default='log', type=str)
-    parser.add_argument('--feature_type', type=str, default='CQT', choices=['CQT', 'STFT', 'MFCC'])
-    parser.add_argument('--model', type=str, required=True)
-
-    parser.add_argument('--epochs', default=2, type=int)
-    parser.add_argument('--lr', default=0.01, type=float)
-    parser.add_argument('--weight_decay', default=1e-5, type=float)
-    parser.add_argument('--hidden_dim', default=50, type=int)
-    parser.add_argument('--num_layers', default=2, type=int)
-    parser.add_argument('--batch_size', default=64, type=int)
-    parser.add_argument('--bidirectional', default=True, type=bool)
-    parser.add_argument('--sch_step_size', default=100, type=int)
-    parser.add_argument('--sch_gamma', default=0.1, type=float)
-    parser.add_argument('--val_step', default=1, type=int)
-    parser.add_argument('--momentum', default=0.8, type=float, help='SGD momentum')
-    parser.add_argument('--dropout', default=(0.4, 0.0, 0.0), type=float, nargs=3, help='list of dropout values: before rnn, inside rnn, after rnn')
-    args = parser.parse_args()
-    return args
-
 
 if __name__ == '__main__':
     args = get_args()

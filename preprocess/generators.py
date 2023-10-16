@@ -15,10 +15,16 @@ from .params import feature_params
 
 def get_feature(audiopath, feature_type):
     x, sr = librosa.load(audiopath, sr=feature_params[feature_type]['fs'])
+    # print(sr)
+    # x = librosa.effects.harmonic(x)
     if feature_type == 'CQT':
         X = feature.get_cqt(x, feature_param=feature_params[feature_type])
     elif feature_type == 'MFCC':
         X = feature.get_mfcc(x, feature_param=feature_params[feature_type])
+    elif feature_type == 'CHROMA_CQT':
+        X = feature.get_chroma_cqt(x, feature_param=feature_params[feature_type])
+    elif feature_type == 'CHROMA_STFT':
+        X = feature.get_chroma_stft(x, feature_param=feature_params[feature_type])
     return X.T
 
 def iter_songs_list(data_list):

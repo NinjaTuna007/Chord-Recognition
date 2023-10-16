@@ -1,0 +1,20 @@
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--len_sub_audio', default=40, type=int)
+parser.add_argument('--log_path', default='log', type=str)
+parser.add_argument('--feature_type', type=str, default='CQT', choices=['CQT', 'STFT', 'MFCC'])
+parser.add_argument('--model', type=str, required=True)
+
+parser.add_argument('--epochs', default=2, type=int)
+parser.add_argument('--lr', default=0.01, type=float)
+parser.add_argument('--weight_decay', default=1e-5, type=float)
+parser.add_argument('--hidden_dim', default=50, type=int)
+parser.add_argument('--num_layers', default=2, type=int)
+parser.add_argument('--batch_size', default=64, type=int)
+parser.add_argument('--bidirectional', default=True, type=bool)
+parser.add_argument('--sch_step_size', default=100, type=int)
+parser.add_argument('--sch_gamma', default=0.1, type=float)
+parser.add_argument('--val_step', default=1, type=int)
+parser.add_argument('--momentum', default=0.8, type=float, help='SGD momentum')
+parser.add_argument('--dropout', default=(0.4, 0.0, 0.0), type=float, nargs=3, help='list of dropout values: before rnn, inside rnn, after rnn')
