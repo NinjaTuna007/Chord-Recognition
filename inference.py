@@ -11,7 +11,7 @@ from preprocess import gen_train_data
 from method import match_template_inference
 
 
-def main(args):
+def inference(args):
 
     print('Arguments:\n' + pformat(args.__dict__))
     
@@ -43,4 +43,4 @@ def main(args):
 
 if __name__ == "__main__":
     args = get_args()
-    main(args)
+    inference(args)

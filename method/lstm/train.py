@@ -12,7 +12,6 @@ import logging
 from .lstm import LSTMClassifier
 # from preprocess.generators import gen_train_data
 from preprocess import get_chord_params_by_mirex_category, feature_params, get_input_size
-from .args import get_args
 
 def split_data_to_batch(data, len_sub_audio, feature_type):
     inds_len = int(len_sub_audio * (feature_params[feature_type]['fs'] / feature_params[feature_type]['hop_length']))
@@ -119,8 +118,8 @@ def train(args):
         scheduler.step()
 
     logging.info('Finished Training')
-    acc = validate(model, val_loader, args.device, print_results=True)
-    return model
+    logging.info('Best val acc: {}'.format(best_acc))
+    return model, best_acc
 
 
 def validate(model, data_loader, device, print_results=False):
@@ -143,14 +142,3 @@ def validate(model, data_loader, device, print_results=False):
     if print_results:
         logging.info(f'Val acc: {acc}')
     return acc
-
-if __name__ == '__main__':
-    args = get_args()
-    args.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    utils.fix_seed()
-    log_path = os.path.join(args.log_path, f'{args.model}_{args.category}_{args.feature_type}_{datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}')
-    os.makedirs(log_path, exist_ok=True)
-    utils.init_logger(os.path.join(log_path, 'train.log'))
-    args.log_path = log_path
-    logging.info('Arguments:\n' + pformat(args.__dict__))
-    train(args)

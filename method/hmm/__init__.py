@@ -1,1 +1,1 @@
-from .hmm import find_chords
+from .hmm import find_chords as hmm_find_chords
