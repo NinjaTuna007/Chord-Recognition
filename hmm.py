@@ -43,10 +43,19 @@ def initialize(chroma, templates, chords, nested_cof, init_method = "theory"):
         for i in range(num_chords):
             if t >= num_chords:
                 t = t % num_chords
-            A[ind][t] = (abs(num_chords // 2 - i) + eps) / (
-                num_chords**2 + num_chords * eps
-            )
+            A[ind][t] = (abs(num_chords // 2 - i) + eps) / ((num_chords**2)/4 + num_chords * eps) # fixed initialization issues
             t += 1
+
+    A_checksum = np.sum(A, axis=1)
+    if np.sum(A_checksum) != num_chords:
+        print("Error in transition matrix")
+        return
+
+    # incentivise staying in the same chord
+    A += np.eye(num_chords) * 0 # 0.4 best so far
+    # normalize A matrix
+    for i in range(num_chords):
+        A[i, :] /= np.sum(A[i, :])
 
     """initialising based on tonic triads - Mean matrix; Tonic with dominant - 0.8,
     tonic with mediant 0.6 and mediant-dominant 0.8, non-triad diagonal elements 
@@ -61,69 +70,71 @@ def initialize(chroma, templates, chords, nested_cof, init_method = "theory"):
     offset = 0
     # print(num_chords)
 
-    if init_method == "theory":
+    for i in range(num_chords):
+        if i == num_chords // 2:
+            offset = 0
+        tonic = offset
+        if i < num_chords // 2:
+            mediant = (tonic + 4) % (num_chords // 2)
+        else:
+            mediant = (tonic + 3) % (num_chords // 2)
+        dominant = (tonic + 7) % (num_chords // 2)
 
-        for i in range(num_chords):
-            if i == num_chords // 2:
-                offset = 0
-            tonic = offset
-            if i < num_chords // 2:
-                mediant = (tonic + 4) % (num_chords // 2)
-            else:
-                mediant = (tonic + 3) % (num_chords // 2)
-            dominant = (tonic + 7) % (num_chords // 2)
+        # weighted diagonal
+        # print(i)
 
-            # weighted diagonal
-            # print(i)
+        cov_mat[i, tonic, tonic] = 1.0
+        cov_mat[i, mediant, mediant] = 1.0
+        cov_mat[i, dominant, dominant] = 1.0
 
-            cov_mat[i, tonic, tonic] = 1.0
-            cov_mat[i, mediant, mediant] = 1.0
-            cov_mat[i, dominant, dominant] = 1.0
-
-            cov_mat[i, tonic, dominant] = 0.8
-            cov_mat[i, dominant, tonic] = 0.8
-            
-            cov_mat[i, mediant, dominant] = 0.8
-            cov_mat[i, dominant, mediant] = 0.8
-
-            cov_mat[i, tonic, mediant] = 0.6
-            cov_mat[i, mediant, tonic] = 0.6
-
-            # off-diagonal - matrix not positive semidefinite, hence determinant is negative
-            # for n in [tonic,mediant,dominant]:
-            #   for m in [tonic, mediant, dominant]:
-            #       if (n is tonic and m is mediant) or (n is mediant and m is tonic):
-            #           cov_mat[i,n,m] = 0.6
-            #       else:
-            #           cov_mat[i,n,m] = 0.8
-
-            # filling non zero diagonals
-            for j in range(num_chords // 2):
-                if cov_mat[i, j, j] == 0:
-                    cov_mat[i, j, j] = 0.2
-            offset += 1
-
-        """observation matrix B is a multivariate Gaussian calculated from mean vector and 
-        covariance matrix"""
-
-        for m in range(nFrames):
-            for n in range(num_chords):
-
-                # print("n: ", n)
-                # print("m: ", m)
-                # print("chroma: ", chroma[:, m])
-                # print("meu_mat: ", meu_mat[n, :])
-                # print("cov_mat: \n", cov_mat[n, :, :])
-                # print(wow_matrix)
-
-
-                wow_prob = multivariate_gaussian(
-                    chroma[:, m], meu_mat[n, :], cov_mat[n, :, :]
-                )
-                # print("wow_matrix: ", wow_prob)
-                B[n, m] = wow_prob
+        cov_mat[i, tonic, dominant] = 0.8
+        cov_mat[i, dominant, tonic] = 0.8
         
-    elif init_method == "random":
+        cov_mat[i, mediant, dominant] = 0.8
+        cov_mat[i, dominant, mediant] = 0.8
+
+        cov_mat[i, tonic, mediant] = 0.6
+        cov_mat[i, mediant, tonic] = 0.6
+
+        # off-diagonal - matrix not positive semidefinite, hence determinant is negative
+        # for n in [tonic,mediant,dominant]:
+        #   for m in [tonic, mediant, dominant]:
+        #       if (n is tonic and m is mediant) or (n is mediant and m is tonic):
+        #           cov_mat[i,n,m] = 0.6
+        #       else:
+        #           cov_mat[i,n,m] = 0.8
+
+        # filling non zero diagonals
+        for j in range(num_chords // 2):
+            if cov_mat[i, j, j] == 0:
+                cov_mat[i, j, j] = 0.2
+        offset += 1
+
+        # convert correlation matrix to covariance matrix in place
+        # std dev of the notes in the chord is 0.2
+        # cov_mat[i, :, :] *= 0.2
+
+    """observation matrix B is a multivariate Gaussian calculated from mean vector and 
+    covariance matrix"""
+
+    for m in range(nFrames):
+        for n in range(num_chords):
+
+            # print("n: ", n)
+            # print("m: ", m)
+            # print("chroma: ", chroma[:, m])
+            # print("meu_mat: ", meu_mat[n, :])
+            # print("cov_mat: \n", cov_mat[n, :, :])
+            # print(wow_matrix)
+
+
+            wow_prob = multivariate_gaussian(
+                chroma[:, m], meu_mat[n, :], cov_mat[n, :, :]
+            )
+            # print("wow_matrix: ", wow_prob)
+            B[n, m] = wow_prob
+        
+    if init_method == "random":
         # initialize PI matrix with random values
         PI = np.random.rand(num_chords)
         # normalize PI matrix
@@ -136,12 +147,10 @@ def initialize(chroma, templates, chords, nested_cof, init_method = "theory"):
             A[i, :] /= np.sum(A[i, :])
 
         # initialize B matrix with random values
-        B = np.random.rand(num_chords, nFrames)
-        # normalize B matrix
-        for i in range(nFrames):
-            B[:, i] /= np.sum(B[:, i])
-
-    
+        # B = np.random.rand(num_chords, nFrames)
+        # # normalize B matrix
+        # for i in range(nFrames):
+        #     B[:, i] /= np.sum(B[:, i])    
     
     # print(bow_wow_matrix)
 
@@ -210,22 +219,25 @@ def viterbi_log(PI, A, B):
             path[j, i] = prob
             states[j, i - 1] = state
 
+    # Backtracking to find the most likely state sequence
+    state_seq = np.zeros(ncol)
+    state_seq[ncol - 1] = np.argmax(path[:, ncol - 1])
+    for i in range(ncol - 2, -1, -1):
+        state_seq[i] = states[int(state_seq[i + 1]), i]
+
     # Convert back to probabilities
-    path = np.exp(path)
-    return (path, states)
+    # path = np.exp(path)
+    return (path, states, state_seq)
 
 
 """Baum-Welch to fine-tune A,B, PI based on Emission Sequences"""
 
-def baum_welch(PI, A, B, max_iters = 10, tol = 1e-6):
+def baum_welch(PI, A, B, max_iters = 100, tol = 1e-3):
 
-    # store original PI, A, B
-    PI_0 = PI
-    A_0 = A
-    B_0 = B
+    # get number of chords and number of frames
+    (num_chords, nFrames) = np.shape(B)
 
     old_log_prob = -np.inf
-    init_log_prob = -np.inf
 
     for iter in range(max_iters):
         
@@ -241,9 +253,6 @@ def baum_welch(PI, A, B, max_iters = 10, tol = 1e-6):
         # print("Iteration: ", iter)
         # print("PI: ", PI)
         # print("A: ", A)
-
-        # get number of chords and number of frames
-        (num_chords, nFrames) = np.shape(B)
 
         # get observation sequence
         # chroma = np.transpose(chroma)
@@ -281,12 +290,8 @@ def baum_welch(PI, A, B, max_iters = 10, tol = 1e-6):
         # find cumulative probability of observation sequence
         log_prob = -np.sum(np.log(forward_norm))
 
-        # store initial log probability
-        if iter == 0:
-            init_log_prob = log_prob
-
         # check for convergence
-        if abs(np.power(10,log_prob) - np.power(10,old_log_prob)) < tol:
+        if abs(log_prob - old_log_prob) < tol:
             break
 
         # backward probability
@@ -326,8 +331,5 @@ def baum_welch(PI, A, B, max_iters = 10, tol = 1e-6):
         # store old log probability
         old_log_prob = log_prob
 
-    if old_log_prob > init_log_prob:
-        return PI, A, B
-    else:
-        # return original PI, A, B
-        return PI_0, A_0, B_0
+    return PI, A, B
+    
