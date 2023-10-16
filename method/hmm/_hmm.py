@@ -308,18 +308,13 @@ def baum_welch(PI, A, B, max_iters = 100, tol = 1e-3):
         for i in range(nFrames - 1):
             for j in range(num_chords):
                 for k in range(num_chords):
-                    xi[j, k, i] = (
-                        forward[j, i]
-                        * A[j, k]
-                        * B[k, i + 1]
-                        * backward[k, i + 1]
-                    )
-                xi[:, :, i] /= np.sum(xi[:, :, i])
+                    xi[j, k, i] = (forward[j, i]* A[j, k]* B[k, i + 1]* backward[k, i + 1])
+                    gamma[j, i] += xi[j, k, i]
 
-        for i in range(nFrames):
-            for j in range(num_chords):
-                gamma[j, i] = forward[j, i] * backward[j, i]
-            gamma[:, i] /= np.sum(gamma[:, i])
+        # calculate gamma for last frame
+        for j in range(num_chords):
+            gamma[j, nFrames - 1] = forward[j, nFrames - 1]
+
 
         # re-estimate PI, A, B
         PI = gamma[:, 0]

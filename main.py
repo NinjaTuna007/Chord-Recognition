@@ -175,7 +175,7 @@ def find_chords(
         (PI, A, B) = hmm.initialize(chroma, templates, chords, nested_cof, init_method = "theory")
         # print(PI.shape)
         # use baum-welch algorithm to train hmm
-        # (PI, A, B) = hmm.baum_welch(PI, A, B)
+        (PI, A, B) = hmm.baum_welch(PI, A, B)
         (path, states, state_seq) = hmm.viterbi_log(PI, A, B)
 
         # print("Path: ", path)
