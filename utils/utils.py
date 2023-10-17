@@ -14,7 +14,7 @@ def get_input_size(args):
     elif args.feature_type == 'STFT':
         return args.n_fft // 2 + 1
     elif args.feature_type == 'MEL':
-        return args.n_fft // 2 + 1
+        return args.n_mels
     elif args.feature_type == 'CHROMA_CQT':
         return 12
     elif args.feature_type == 'CHROMA_STFT':

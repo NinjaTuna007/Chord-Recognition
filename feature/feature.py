@@ -16,7 +16,7 @@ def get_stft(x, args):
     return stft
 
 def get_mel_spectrogram(x, args):
-    mel_spectrogram = librosa.feature.melspectrogram(y=x, sr=args.sr, n_fft=args.n_fft, hop_length=args.hop_length, window='hamming')
+    mel_spectrogram = librosa.feature.melspectrogram(y=x, sr=args.sr, n_fft=args.n_fft, hop_length=args.hop_length, window='hamming', n_mels=args.n_mels)
     mel_spectrogram = np.abs(mel_spectrogram)
     return mel_spectrogram
 
