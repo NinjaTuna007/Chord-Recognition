@@ -12,7 +12,7 @@ def preprocess(args):
     data_list_name = args.data_list.split('/')[-1].split('.')[0]
     data_snapshot_name = '_'.join([data_list_name, args.feature_type, args.category]) + '.pt'
     if not os.path.exists(os.path.join(args.data_snapshot_path, data_snapshot_name)):
-        data = gen_train_data(args.feature_type, args.data_list, args.audio_path, args.gt_path, args.category)
+        data = gen_train_data(args)
         os.makedirs(args.data_snapshot_path, exist_ok=True)
         
         torch.save(data, os.path.join(args.data_snapshot_path, data_snapshot_name))

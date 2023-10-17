@@ -6,6 +6,15 @@ import logging.config
 import torch
 import torch.nn as nn
 
+def get_input_size(args):
+    if args.feature_type == 'CQT':
+        return args.n_bins
+    elif args.feature_type == 'MFCC':
+        return args.n_mfcc
+    elif args.feature_type == 'STFT':
+        return args.n_fft // 2 + 1
+    else:
+        raise NotImplementedError
 
 class AvgrageMeter(object):
     def __init__(self):

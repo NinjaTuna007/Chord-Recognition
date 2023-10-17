@@ -9,12 +9,12 @@ from pprint import pformat
 import utils
 import logging
 from .lstm import LSTMClassifier
-from preprocess import get_chord_params_by_mirex_category, get_input_size
+from preprocess import get_chord_params_by_mirex_category
 from .dataset import ChordDataset, split_data_to_batch
 
 def get_model(args):
     num_classes = get_chord_params_by_mirex_category(args.category)['label_size']
-    input_size = get_input_size(args.feature_type)
+    input_size = utils.get_input_size(args)
     # create model
     if args.model == 'LSTM':
         model = LSTMClassifier(input_size=input_size, hidden_dim=args.hidden_dim, output_size=num_classes, num_layers=args.num_layers, device=args.device, bidirectional=args.bidirectional, dropout=args.dropout)
@@ -29,7 +29,7 @@ def get_data(args):
     data_snapshot_name = '_'.join([data_list_name, args.feature_type, args.category]) + '.pt'
     data = torch.load(os.path.join(args.data_snapshot_path, data_snapshot_name))
 
-    data = split_data_to_batch(data, args.len_sub_audio, args.feature_type)
+    data = split_data_to_batch(data, args)
 
     # split data to train and val randomly
     ind = np.arange(len(data))

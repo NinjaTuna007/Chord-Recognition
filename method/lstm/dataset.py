@@ -3,10 +3,9 @@ import numpy as np
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from preprocess import feature_params
 
-def split_data_to_batch(data, len_sub_audio, feature_type):
-    inds_len = int(len_sub_audio * (feature_params[feature_type]['fs'] / feature_params[feature_type]['hop_length']))
+def split_data_to_batch(data, args):
+    inds_len = int(args.len_sub_audio * (args.sr / args.hop_length))
     data_batch = []
     for d in data:
         audio_name, X, y = d

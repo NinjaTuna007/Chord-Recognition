@@ -7,7 +7,7 @@ from preprocess import gen_train_data
 from preprocess.chords import chord_to_categories, chords_nums_to_inds
 
 def inference(args):
-    data = gen_train_data(args.feature_type, args.data_list, args.audio_path, args.gt_path, args.category)
+    data = gen_train_data(args)
     predictions = []
     total, correct = 0, 0
     for i in range(len(data)):

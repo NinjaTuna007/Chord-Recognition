@@ -5,24 +5,9 @@ from .get_templates import get_templates, get_chords
 import librosa
 
 
-def find_chords(x, fs):
-    """
-    Given a mono audio signal x, and its sampling frequency, fs,
-    find chords in it using 'method'
-    Args:
-        x : mono audio signal
-        fs : sampling frequency (Hz)
-    """
-    print(x.shape)
+def find_chords(chroma, args):
     chords = get_chords()
     templates = get_templates(chords)
-
-    # compute chromagram using librosa
-    hop_size = 4096
-    chroma = x
-    # for n in range(chroma.shape[1]):
-    #     chroma[:, n] = chroma[:, n]/np.sum(chroma[:, n])
-
     num_chords = len(templates)
 
     # correlate 12D chroma vector with each of
@@ -40,7 +25,7 @@ def find_chords(x, fs):
 
     # if max_cor[n] < threshold, then no chord is played
     # might need to change threshold value
-    id_chord[np.where(max_cor < 0.1 * np.max(max_cor))] = 0
+    id_chord[np.where(max_cor < args.threshold * np.max(max_cor))] = 0
     final_chords = [chords[cid] for cid in id_chord]
 
     return final_chords

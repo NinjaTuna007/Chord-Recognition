@@ -19,3 +19,9 @@ parser.add_argument('--sch_gamma', default=0.1, type=float)
 parser.add_argument('--val_step', default=1, type=int)
 parser.add_argument('--momentum', default=0.8, type=float, help='SGD momentum')
 parser.add_argument('--dropout', default=(0.4, 0.0, 0.0), type=float, nargs=3, help='list of dropout values: before rnn, inside rnn, after rnn')
+
+# Feature params
+parser.add_argument('--hop_length', type=int, default=512, help='hop length')
+parser.add_argument('--n_fft', type=int, default=2048, help='number of fft bins')
+parser.add_argument('--n_mfcc', type=int, default=20, help='number of MFCCs')
+parser.add_argument('--n_bins', type=int, default=84, help='number of bins for CQT')

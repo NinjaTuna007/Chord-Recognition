@@ -10,21 +10,19 @@ import librosa
 import feature
 
 from .chords import convert_gt, chord_nums_to_inds, chords_nums_to_inds
-from .params import feature_params
 
 
-def get_feature(audiopath, feature_type):
-    x, sr = librosa.load(audiopath, sr=feature_params[feature_type]['fs'])
-    # print(sr)
+def get_feature(audiopath, args):
+    x, _ = librosa.load(audiopath, sr=args.sr)
     # x = librosa.effects.harmonic(x)
-    if feature_type == 'CQT':
-        X = feature.get_cqt(x, feature_param=feature_params[feature_type])
-    elif feature_type == 'MFCC':
-        X = feature.get_mfcc(x, feature_param=feature_params[feature_type])
-    elif feature_type == 'CHROMA_CQT':
-        X = feature.get_chroma_cqt(x, feature_param=feature_params[feature_type])
-    elif feature_type == 'CHROMA_STFT':
-        X = feature.get_chroma_stft(x, feature_param=feature_params[feature_type])
+    if args.feature_type == 'CQT':
+        X = feature.get_cqt(x, args)
+    elif args.feature_type == 'MFCC':
+        X = feature.get_mfcc(x, args)
+    elif args.feature_type == 'CHROMA_CQT':
+        X = feature.get_chroma_cqt(x, args)
+    elif args.feature_type == 'CHROMA_STFT':
+        X = feature.get_chroma_stft(x, args)
     return X.T
 
 def iter_songs_list(data_list):
@@ -40,15 +38,15 @@ def gen_test_data(data_list, audio_path, params):
         yield (song_name, get_feature(f'{audio_path}/{audio_path}', params, mod_steps=(0,)))
 
 
-def gen_train_data(feature_type, data_list, audio_path, gt_path, category):
+def gen_train_data(args):
     data = []
-    for song_title, song_folder in iter_songs_list(data_list):
+    for song_title, song_folder in iter_songs_list(args.data_list):
         print('collecting training data of ', song_title)
-        X = get_feature(f'{audio_path}/{song_folder}', feature_type)
+        X = get_feature(f'{args.audio_path}/{song_folder}', args)
 
-        y_nums = convert_gt(f'{gt_path}/{song_title}.lab', feature_params[feature_type]['hop_length'], feature_params[feature_type]['fs'], len(X), category)
+        y_nums = convert_gt(f'{args.gt_path}/{song_title}.lab', args.hop_length, args.sr, len(X), args.category)
 
-        y = chords_nums_to_inds(y_nums, category)
+        y = chords_nums_to_inds(y_nums, args.category)
         y = np.array(y)
         data.append((song_title, X, y))
     
