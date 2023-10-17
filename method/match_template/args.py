@@ -5,5 +5,5 @@ parser.add_argument('--feature_type', type=str, default='CHROMA_CQT', choices=['
 parser.add_argument('--threshold', type=float, default=0.1)
 
 # Feature params
-parser.add_argument('--hop_length', type=int, default=4096)
-parser.add_argument('--n_fft', type=int, default=2048)
+parser.add_argument('--hop_length', type=int, default=512)
+parser.add_argument('--n_fft', type=int, default=4096)

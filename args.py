@@ -10,6 +10,8 @@ def get_args():
     parser.add_argument('--data_list', type=str, default='./data/data_list/TheBeatles.list', help='data list for inference')
     parser.add_argument('--data_snapshot_path', default='data/snapshot', type=str)
     parser.add_argument('--sr', type=int, default=44100)
+    # suppress percussive elements in audio
+    parser.add_argument('--suppress_percussive', type=bool, default=True)
 
     args, remaining_argv = parser.parse_known_args()
     

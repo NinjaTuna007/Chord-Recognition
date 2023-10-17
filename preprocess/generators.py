@@ -15,7 +15,10 @@ from .chords import convert_gt, chord_nums_to_inds, chords_nums_to_inds
 def get_feature(audiopath, args):
     x, _ = librosa.load(audiopath, sr=args.sr)
     # x = librosa.effects.harmonic(x)
-    if args.feature_type == 'CQT':
+    # Suppress percussive elements
+    if args.suppress_percussive:
+        x = librosa.effects.harmonic(x, margin=4)
+    if args.feature_type == 'CQT':    
         X = feature.get_cqt(x, args)
     elif args.feature_type == 'MFCC':
         X = feature.get_mfcc(x, args)
