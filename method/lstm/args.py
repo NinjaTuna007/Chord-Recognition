@@ -1,10 +1,11 @@
 import argparse
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--train_data_list', type=str, default='./data/data_list/TheBeatles_train.list')
 parser.add_argument('--len_sub_audio', default=40, type=int)
 parser.add_argument('--log_path', default='log', type=str)
 parser.add_argument('--snapshot_path', type=str)
-parser.add_argument('--feature_type', type=str, default='CQT', choices=['CQT', 'STFT', 'MFCC'])
+parser.add_argument('--feature_type', type=str, default='CQT', choices=['CQT', 'STFT', 'MFCC', 'MEL', 'CHROMA_CQT', 'CHROMA_STFT'])
 parser.add_argument('--model', type=str, required=True)
 
 parser.add_argument('--epochs', default=2, type=int)

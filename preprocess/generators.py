@@ -19,6 +19,10 @@ def get_feature(audiopath, args):
         X = feature.get_cqt(x, args)
     elif args.feature_type == 'MFCC':
         X = feature.get_mfcc(x, args)
+    elif args.feature_type == 'STFT':
+        X = feature.get_stft(x, args)
+    elif args.feature_type == 'MEL':
+        X = feature.get_mel_spectrogram(x, args)
     elif args.feature_type == 'CHROMA_CQT':
         X = feature.get_chroma_cqt(x, args)
     elif args.feature_type == 'CHROMA_STFT':
@@ -38,9 +42,9 @@ def gen_test_data(data_list, audio_path, params):
         yield (song_name, get_feature(f'{audio_path}/{audio_path}', params, mod_steps=(0,)))
 
 
-def gen_train_data(args):
+def gen_train_data(args, data_list):
     data = []
-    for song_title, song_folder in iter_songs_list(args.data_list):
+    for song_title, song_folder in iter_songs_list(data_list):
         print('collecting training data of ', song_title)
         X = get_feature(f'{args.audio_path}/{song_folder}', args)
 

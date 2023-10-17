@@ -13,6 +13,12 @@ def get_input_size(args):
         return args.n_mfcc
     elif args.feature_type == 'STFT':
         return args.n_fft // 2 + 1
+    elif args.feature_type == 'MEL':
+        return args.n_fft // 2 + 1
+    elif args.feature_type == 'CHROMA_CQT':
+        return 12
+    elif args.feature_type == 'CHROMA_STFT':
+        return 12
     else:
         raise NotImplementedError
 

@@ -43,7 +43,7 @@ def validate(model, data_loader, device, print_results=False):
 
 def inference(args):
     assert args.snapshot_path, 'Please specify snapshot path.'
-    data = gen_train_data(args)
+    data = gen_train_data(args, args.data_list)
     model = get_model(args)
     utils.load_checkpoint(model, args.snapshot_path)
     model = model.to(args.device)

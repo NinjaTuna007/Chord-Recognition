@@ -9,7 +9,7 @@ from pprint import pformat
 import utils
 import logging
 from .lstm import LSTMClassifier
-from preprocess import get_chord_params_by_mirex_category
+from preprocess import get_chord_params_by_mirex_category, gen_train_data
 from .dataset import ChordDataset, split_data_to_batch
 
 def get_model(args):
@@ -24,20 +24,14 @@ def get_model(args):
     return model
 
 def get_data(args):
-    # load preprocessed data
-    data_list_name = args.data_list.split('/')[-1].split('.')[0]
-    data_snapshot_name = '_'.join([data_list_name, args.feature_type, args.category]) + '.pt'
-    data = torch.load(os.path.join(args.data_snapshot_path, data_snapshot_name))
+    train_data = gen_train_data(args, args.train_data_list)
+    train_data = split_data_to_batch(train_data, args)
 
-    data = split_data_to_batch(data, args)
+    val_data = gen_train_data(args, args.data_list)
+    val_data = split_data_to_batch(val_data, args)
 
-    # split data to train and val randomly
-    ind = np.arange(len(data))
-    np.random.shuffle(ind)
-    train_ind = ind[:int(len(data) * 0.8)]
-    val_ind = ind[int(len(data) * 0.8):]
-    train_dataset = ChordDataset([data[i] for i in train_ind])
-    val_dataset = ChordDataset([data[i] for i in val_ind])
+    train_dataset = ChordDataset(train_data)
+    val_dataset = ChordDataset(val_data)
     
     # create dataloaders
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, num_workers=0)
