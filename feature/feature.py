@@ -26,5 +26,5 @@ def get_chroma_cqt(x, args):
     return chroma
 
 def get_chroma_stft(x, args):
-    chroma = librosa.feature.chroma_stft(y=x, sr=args.sr, hop_length=args.hop_length)
+    chroma = librosa.feature.chroma_stft(y=x, sr=args.sr, hop_length=args.hop_length, n_fft=args.n_fft)
     return chroma
