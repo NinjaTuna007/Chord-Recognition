@@ -13,7 +13,6 @@ def inference(args):
     for i in range(len(data)):
         total += len(data[i][2])
         x = data[i][1].T
-        fs = 44100
         final_chords = find_chords(x, args)
         chord_nums = []
         # print(final_chords)
