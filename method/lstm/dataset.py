@@ -16,7 +16,7 @@ def split_data_to_batch(data, args):
         for i in range(len(X)):
             data_batch.append((audio_name, X[i], y[i]))
     # padding for X and y
-    max_len = 3440
+    max_len = 3441
     for i in range(len(data_batch)):
         data_batch[i] = (data_batch[i][0], np.pad(data_batch[i][1], ((0, max_len - len(data_batch[i][1])), (0, 0)), 'constant', constant_values=((-1, -1), (-1, -1))), np.pad(data_batch[i][2], (0, max_len - len(data_batch[i][2])), 'constant', constant_values=(-1, -1)))
     return data_batch
