@@ -8,7 +8,7 @@ parser.add_argument('--snapshot_path', type=str)
 parser.add_argument('--feature_type', type=str, default='CQT', choices=['CQT', 'STFT', 'MFCC', 'MEL', 'CHROMA_CQT', 'CHROMA_STFT'])
 parser.add_argument('--model', type=str, required=True)
 
-parser.add_argument('--epochs', default=2, type=int)
+parser.add_argument('--epochs', default=100, type=int)
 parser.add_argument('--lr', default=0.01, type=float)
 parser.add_argument('--weight_decay', default=1e-5, type=float)
 parser.add_argument('--hidden_dim', default=50, type=int)
