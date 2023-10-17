@@ -5,14 +5,7 @@ from .get_templates import get_templates, get_nested_circle_of_fifths
 from . import _hmm as hmm
 import librosa
 
-def find_chords(x, fs):
-    """
-    Given a mono audio signal x, and its sampling frequency, fs,
-    find chords in it using 'method'
-    Args:
-        x : mono audio signal
-        fs : sampling frequency (Hz)
-    """
+def find_chords(x, args):
     chords, nested_cof = get_nested_circle_of_fifths()
     templates = get_templates(chords)
 
@@ -24,7 +17,7 @@ def find_chords(x, fs):
     (PI, A, B) = hmm.initialize(chroma, templates, chords, nested_cof, init_method = "theory")
     # print(PI.shape)
     # use baum-welch algorithm to train hmm
-    (PI, A, B) = hmm.baum_welch(PI, A, B)
+    (PI, A, B) = hmm.baum_welch(PI, A, B, args.max_iters, args.tol)
     (path, states, state_seq) = hmm.viterbi_log(PI, A, B)
 
     # print("Path: ", path)
