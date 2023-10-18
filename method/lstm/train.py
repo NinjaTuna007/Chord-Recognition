@@ -33,6 +33,7 @@ def get_data(args):
     # padding for X and y
     max_len = max([max([len(d[1]) for d in train_data_batch]), max([len(d[1]) for d in val_data_batch])])
     train_data_batch = padding(train_data_batch, max_len)
+    val_data_batch = padding(val_data_batch, max_len)
 
     train_dataset = ChordDataset(train_data)
     val_dataset = ChordDataset(val_data)
