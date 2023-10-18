@@ -4,7 +4,7 @@ import torch
 import torch.optim as optim
 import torch.nn as nn
 
-def padding(data_batch, max_len=None):
+def batch_padding(data_batch, max_len=None):
     if max_len is None:
         max_len = max([len(d[1]) for d in data_batch])
     for i in range(len(data_batch)):
@@ -25,7 +25,7 @@ def split_data_to_batch(data, args, padding=True):
     # padding for X and y
     # max_len = 3441
     if padding:
-        data_batch = padding(data_batch)
+        data_batch = batch_padding(data_batch)
     return data_batch
 
 

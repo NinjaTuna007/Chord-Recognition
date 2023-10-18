@@ -10,7 +10,7 @@ import utils
 import logging
 from .lstm import LSTMClassifier
 from preprocess import get_chord_params_by_mirex_category, gen_train_data
-from .dataset import ChordDataset, split_data_to_batch, padding
+from .dataset import ChordDataset, split_data_to_batch, batch_padding
 
 def get_model(args):
     num_classes = get_chord_params_by_mirex_category(args.category)['label_size']
@@ -32,8 +32,8 @@ def get_data(args):
 
     # padding for X and y
     max_len = max([max([len(d[1]) for d in train_data_batch]), max([len(d[1]) for d in val_data_batch])])
-    train_data = padding(train_data_batch, max_len)
-    val_data = padding(val_data_batch, max_len)
+    train_data = batch_padding(train_data_batch, max_len)
+    val_data = batch_padding(val_data_batch, max_len)
 
     train_dataset = ChordDataset(train_data)
     val_dataset = ChordDataset(val_data)
