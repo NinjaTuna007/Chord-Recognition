@@ -5,12 +5,13 @@ import librosa
 from .hmm import find_chords
 from preprocess import gen_train_data
 from preprocess.chords import chord_to_categories, chords_nums_to_inds
+from tqdm import trange
 
 def inference(args):
     data = gen_train_data(args, args.data_list)
     predictions = []
     total, correct = 0, 0
-    for i in range(len(data)):
+    for i in trange(len(data)):
         total += len(data[i][2])
         x = data[i][1].T
         final_chords = find_chords(x, args)
