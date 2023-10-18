@@ -11,7 +11,7 @@ def get_args():
     parser.add_argument('--data_snapshot_path', default='data/snapshot', type=str)
     parser.add_argument('--sr', type=int, default=44100)
     # suppress percussive elements in audio
-    parser.add_argument('--suppress_percussive', type=bool, default=False)
+    parser.add_argument('--suppress_percussive', action='store_true', default=False)
 
     args, remaining_argv = parser.parse_known_args()
     
